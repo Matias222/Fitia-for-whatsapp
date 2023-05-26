@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  talk:
+    image: syntaxaicontainers.azurecr.io/bot
+    container_name: bot
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    environment:
+      - account_sid=${account_sid}
+      - auth_token=${auth_token}
+      - numero=${numero}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
