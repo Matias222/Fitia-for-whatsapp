@@ -163,6 +163,27 @@ async def webhook(request: Request):
 
         if(falta_info==[]):
             print("Usuario ya creado exitosamente")
+
+            objetivo=usuario[1]["objetivo"]
+            objetivo_confirmado=usuario[1]["objetivo_confirmado"]
+
+
+            if(objetivo==""): objetivo=incoming_msg
+
+            if(objetivo_confirmado==True):
+                print("Todos los datos del usuario confirmados")
+            else:
+                if(incoming_msg.lower()=="si"): 
+                    mensaje_retornar="Perfecto ya esta registrado"
+                    await update_usuario(int(sender_number[10:]),nombre,peso,talla,objetivo,True)
+                elif(incoming_msg.lower()=="no"): 
+                    mensaje_retornar="Digame su objetivo porfavor"
+                    await update_usuario(int(sender_number[10:]),nombre,peso,talla,objetivo)
+                else:
+                    #Pedir de nuevo el objetivo
+                    mensaje_retornar="Su objetivo a alcanzar es, \""+str(objetivo)+"\", es correcto? Para confirmar escriba Si, caso contrario, No"
+                    await update_usuario(int(sender_number[10:]),nombre,peso,talla,objetivo)
+
         else:
 
             dic=parseo_info(incoming_msg)
@@ -186,11 +207,8 @@ async def webhook(request: Request):
             
 
                 if(len(nuevo_falta_info)==0): mensaje_retornar=f"Genial, {nombre}, ahora dime cuales son tus objetivos alimenticios"
-
                 elif(len(nuevo_falta_info)==1): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]}"
-
                 elif(len(nuevo_falta_info)==2): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]} y {nuevo_falta_info[1]}"
-
                 else: mensaje_retornar="Ya p no me dijiste tus datos"
 
                 await update_usuario(int(sender_number[10:]),nombre,peso,talla)
