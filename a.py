@@ -6,7 +6,8 @@ import asyncio
 from pydub import AudioSegment
 from moviepy.editor import AudioFileClip
 from bd_functions import insertar_usuario
-
+from bd_functions import insertar_user_history
+from bd_functions import update_user_history
 
 load_dotenv()
 
@@ -85,3 +86,43 @@ def parseo_info(query):
     return result
 
 parseo_info("Hola soy Luis")
+
+
+
+
+#pruebas user_history
+
+#id_numero,dia="",calorias=0.0,litros=0.0,chat="",comidas=[]
+async def my_async_function():
+    return await insertar_user_history("51926883329","2023-06-02",74.25,10,"Hoy tome bastante agua como 10lt",["Arroz con pollo","Pan con mayonesa"])
+
+def validar(query):
+     # Create an event loop
+    loop = asyncio.get_event_loop()
+    # Run the async function
+    user=loop.run_until_complete(my_async_function())
+    print("========== user ===========",user[0])
+    # Close the event loop
+    loop.close()
+
+
+#id_numero,dia="",calorias=0.0,litros=0.0,chat="",comidas=[]
+async def my_async_function2():
+    return await update_user_history("51926883329","2023-06-02",200,2,"Hoy comi mucho, estoy lleno",["Loma saltado","Chaufa","Papa","Pizza"])
+
+def validar2(query):
+     # Create an event loop
+    loop = asyncio.get_event_loop()
+    # Run the async function
+    user=loop.run_until_complete(my_async_function2())
+    print("=====Listo==============")
+    # Close the event loop
+    loop.close()
+
+#Si quieres probar el codigo, ponlo ahi abajo y compila el archivo
+if __name__ == "__main__":
+        #prueba validar ingreso user_history
+        #validar("")
+
+        #Prueba de validar update
+        validar2("")
