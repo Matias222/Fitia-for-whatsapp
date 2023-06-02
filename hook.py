@@ -6,6 +6,7 @@ from datetime import datetime
 from moviepy.editor import AudioFileClip
 from bd_functions import insertar_usuario,update_usuario
 
+import gender_guesser.detector as gender
 import tempfile
 import os
 import requests
@@ -27,22 +28,64 @@ client = Client(account_sid, auth_token)
 app = FastAPI()
 
 
+def contador_calorias(nombre,talla,peso,edad,objetivo):
+    
+    detector = gender.Detector()
+    genero=""
+
+    if (detector.get_gender(nombre) == "male"): genero="hombre"
+    else: genero="mujer"
+
+    query = {"edad":edad,"peso":peso,"talla":talla,"genero":genero,"objetivos":objetivo}
+    
+    ej1= {"edad":20,"peso":89,"talla":1.76,"genero":"hombre","objetivo":"Bajar de peso 10k"}
+    ej2= {"edad":38,"peso":72,"talla":1.66,"genero":"mujer","objetivo":"Bajar de peso 5k"}
+
+    print(query)
+
+    completion = openai.ChatCompletion.create(
+        
+        model="gpt-3.5-turbo",
+        messages=[
+            
+            {"role": "system","content": """Eres un nutricionista experto, dado mi edad, peso, talla, genero y objetivos. Calcula la cantidad maxima de calorias que debo consumir en 1 dia y cuantos litros de agua debo tomar."""},
+            
+            {"role": "system", "name":"example_user", "content":str(ej1)},
+            {"role": "system", "name": "example_assistant", "content": "{\"Calorias\":2100,\"Agua\":2}"},
+
+            {"role": "system", "name":"example_user", "content":str(ej2)},
+            {"role": "system", "name": "example_assistant", "content": "{\"Calorias\":1600,\"Agua\":1.8"},
+
+            {"role":"user","content":str(query)}
+
+        ],
+        temperature=0,
+        max_tokens=300,
+    )
+
+    result = completion.choices[0].message["content"]
+    
+    print(result)
+
+    return result
 
 def parseo_info(query):
 
-    prompt="""Tu unica funcion es dado el input del usuario, devolver un JSON con tres caracteristicas, Nombre, Peso y Talla.
+    prompt="""Tu unica funcion es dado el input del usuario, devolver un JSON con cuatro caracteristicas, nombre, peso, talla y edad.
     Usuario: Hola soy Matias, mido 1.77 y peso 86.
-    AI: {"Nombre":"Matias","Talla":1.77,"Peso":86}
+    AI: {"nombre":"Matias","talla":1.77,"peso":86}
 
     Usuario: Buenas tardes me llamo Juan Diego, mi altura es de 2.11 y peso 95kg
-    AI: {"Nombre":"Juan Diego","Talla":2.11,"Peso":95}
+    AI: {"nombre":"Juan Diego","talla":2.11,"peso":95}
 
-    Usuario: Hola soy Diego
-    AI: {"Nombre":"Diego"}
+    Usuario: Hola soy Paolo
+    AI: {"nombre":"Paolo"}
 
+    Usuario: Me llamo Diego, tengo 21, mido 1.77 y peso 88
+    AI: {"nombre":"Diego","talla":1.77,"peso":88,"edad":21}
+    
     Usuario: %s
     AI: """%(query)
-
 
     response = openai.Completion.create(
         model='text-davinci-003',
@@ -141,25 +184,24 @@ async def webhook(request: Request):
     usuario=await insertar_usuario(int(sender_number[10:]))
     
     if(usuario[0]==0):
-        mensaje_retornar="Hola soy Wanly, tu amigo nutricionista. Dime tu nombre, peso y talla"
+        mensaje_retornar="Hola soy Wanly, tu amigo nutricionista. Dime tu nombre, edad, peso y talla"
     else:
     
 
         falta_info=[]
 
-        nombre=""
-        peso=0.0
-        talla=0.0
+        datos_usuario={"nombre":"","talla":0,"peso":0,"edad":0}
 
         if(usuario[1]["nombre"]==""): falta_info.append("nombre")
-        else: nombre=usuario[1]["nombre"]
+        else: datos_usuario["nombre"]=usuario[1]["nombre"]
+   
+        for categoria in datos_usuario:
+            if(categoria!="nombre"):
+                if(usuario[1][categoria]==0): falta_info.append(categoria)
+                else: datos_usuario[categoria]=usuario[1][categoria]
 
-        if(usuario[1]["peso"]==0.0): falta_info.append("peso")
-        else: peso=usuario[1]["peso"]
-
-        if(usuario[1]["talla"]==0.0): falta_info.append("talla")
-        else: talla=usuario[1]["talla"]
-
+        print(datos_usuario)
+        print(falta_info)
 
         if(falta_info==[]):
             print("Usuario ya creado exitosamente")
@@ -167,22 +209,31 @@ async def webhook(request: Request):
             objetivo=usuario[1]["objetivo"]
             objetivo_confirmado=usuario[1]["objetivo_confirmado"]
 
-
-            if(objetivo==""): objetivo=incoming_msg
+            print(objetivo,objetivo_confirmado)
 
             if(objetivo_confirmado==True):
+                
                 print("Todos los datos del usuario confirmados")
+
+                plan_nutricional=contador_calorias(usuario[1]["nombre"],usuario[1]["talla"],usuario[1]["peso"],usuario[1]["edad"],usuario[1]["objetivo"])
+
+                mensaje_retornar=plan_nutricional
+
+                await update_usuario(int(sender_number[10:]),usuario[1]["nombre"],usuario[1]["peso"],usuario[1]["talla"],usuario[1]["edad"],objetivo,True,calorias_dia=1,litros_dia=2.2)
+
             else:
+
                 if(incoming_msg.lower()=="si"): 
                     mensaje_retornar="Perfecto ya esta registrado"
-                    await update_usuario(int(sender_number[10:]),nombre,peso,talla,objetivo,True)
+                    await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo,True)
                 elif(incoming_msg.lower()=="no"): 
                     mensaje_retornar="Digame su objetivo porfavor"
-                    await update_usuario(int(sender_number[10:]),nombre,peso,talla,objetivo)
+                    await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo)
                 else:
                     #Pedir de nuevo el objetivo
+                    objetivo=incoming_msg
                     mensaje_retornar="Su objetivo a alcanzar es, \""+str(objetivo)+"\", es correcto? Para confirmar escriba Si, caso contrario, No"
-                    await update_usuario(int(sender_number[10:]),nombre,peso,talla,objetivo)
+                    await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo)
 
         else:
 
@@ -194,24 +245,25 @@ async def webhook(request: Request):
                 nuevo_falta_info=[]
 
                 if("nombre" in falta_info):
-                    if "Nombre" not in dic: nuevo_falta_info.append("nombre")
-                    else: nombre=dic["Nombre"]
-                
-                if("peso" in falta_info):
-                    if "Peso" not in dic:  nuevo_falta_info.append("peso")
-                    else: peso=dic["Peso"]
-                
-                if("talla" in falta_info):
-                    if "Talla" not in dic: nuevo_falta_info.append("talla")
-                    else: talla=dic["Talla"]
+                    if "nombre" not in dic: nuevo_falta_info.append("nombre")
+                    else: datos_usuario["nombre"]=dic["nombre"]
             
+                for categoria in datos_usuario:
+                    if(categoria!="nombre"):
+                        if(categoria in falta_info):
+                            if categoria not in dic:  nuevo_falta_info.append(categoria)
+                            else: datos_usuario[categoria]=dic[categoria]
+
+                print(nuevo_falta_info)
+                nombre=datos_usuario["nombre"]
 
                 if(len(nuevo_falta_info)==0): mensaje_retornar=f"Genial, {nombre}, ahora dime cuales son tus objetivos alimenticios"
                 elif(len(nuevo_falta_info)==1): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]}"
                 elif(len(nuevo_falta_info)==2): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]} y {nuevo_falta_info[1]}"
+                elif(len(nuevo_falta_info)==3): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]}, {nuevo_falta_info[1]} y {nuevo_falta_info[2]}"
                 else: mensaje_retornar="Ya p no me dijiste tus datos"
 
-                await update_usuario(int(sender_number[10:]),nombre,peso,talla)
+                await update_usuario(int(sender_number[10:]),nombre,datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"])
   
 
     message = client.messages \

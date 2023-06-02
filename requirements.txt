@@ -73,3 +73,4 @@ moviepy==1.0.3
 ffmpeg==1.4
 ffmpeg-python==0.2.0
 openai==0.27.0
+gender-guesser==0.4.0
