@@ -249,10 +249,10 @@ async def webhook(request: Request):
 
             if(objetivo_confirmado==True):
                 
-                print("Todos los datos del usuario confirmados")
+               #Aca empieza el dictado de comidas
 
-                await update_usuario(int(sender_number[10:]),usuario[1]["nombre"],usuario[1]["peso"],usuario[1]["talla"],usuario[1]["edad"],objetivo,True,calorias_dia=1,litros_dia=2.2)
-
+                mensaje_retornar="GAAAA"
+                    
             else:
 
                 if(incoming_msg.lower()=="si"): 
@@ -319,6 +319,6 @@ async def webhook(request: Request):
         print(parseo_dic)
 
         await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo,True,parseo_dic["calorias"],parseo_dic["litros"])
-        
+
 
     return "Hello"
