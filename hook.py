@@ -14,7 +14,7 @@ import supabase
 import random
 import openai
 import json
-
+import time
 
 load_dotenv()
 
@@ -48,7 +48,7 @@ def contador_calorias(nombre,talla,peso,edad,objetivo):
         model="gpt-3.5-turbo",
         messages=[
             
-            {"role": "system","content": """Eres un nutricionista experto, dado mi edad, peso, talla, genero y objetivos. Calcula la cantidad maxima de calorias que debo consumir en 1 dia y cuantos litros de agua debo tomar."""},
+            {"role": "system","content": """Eres un nutricionista experto, dado mi edad, peso, talla, genero y objetivos. Calcula la cantidad maxima de calorias que debo consumir en 1 dia y cuantos litros de agua debo tomar, se conciso."""},
             
             {"role": "system", "name":"example_user", "content":str(ej1)},
             {"role": "system", "name": "example_assistant", "content": "{\"Calorias\":2100,\"Agua\":2}"},
@@ -106,6 +106,38 @@ def parseo_info(query):
 
     return ans
 
+def parseo_openai(query):
+
+    prompt="""Tu unica funcion es dado el input del usuario, devolver un JSON con dos caracteristicas, calorias y litros.
+    Usuario: Basándome en los datos que me proporcionaste, para lograr tu objetivo de bajar 10 kilos, deberías consumir alrededor de 2000 calorías al día y tomar al menos 2 litros de agua diariamente. Es importante que tengas en cuenta que estos valores son aproximados y que pueden variar dependiendo de tu nivel de actividad física y otros factores individuales. Además, es recomendable que consultes con un nutricionista para que te brinde una dieta personalizada y adecuada a tus necesidades.
+    AI: {"calorias":"2000","litros":2}
+
+    Usuario: Para una mujer de 21 años, con un peso de 89 kg, una talla de 1.76 m y un objetivo de bajar 10 kg, se recomienda un consumo diario de aproximadamente 1800-2000 calorías. Además, se recomienda tomar al menos 1.8 litros de agua al día. Es importante recordar que estos son valores aproximados y que pueden variar según el nivel de actividad física y otros factores individuales. Es recomendable consultar con un nutricionista para obtener una evaluación más precisa y personalizada.  
+    AI: {"calorias":"1800-2000","litros":1.8}
+
+    Usuario: %s
+    AI: """%(query)
+
+    response = openai.Completion.create(
+        model='text-davinci-003',
+        prompt=prompt,
+        temperature=0,
+        max_tokens= 256
+    )
+    
+    result = response.choices[0]['text']
+    
+    print(result)
+
+    ans={}
+    try: ans=json.loads(result)
+    except: ans={}
+
+    print(ans)
+
+    return ans
+
+
 def transcribe_audio(audio_file):
 
     audio_file = open(audio_file, "rb")
@@ -118,6 +150,8 @@ def transcribe_audio(audio_file):
 
 @app.post("/bot")
 async def webhook(request: Request):
+
+    guardar_info=False
 
     message_body = await request.form()
     
@@ -182,7 +216,9 @@ async def webhook(request: Request):
     print(sender_number[10:])
 
     usuario=await insertar_usuario(int(sender_number[10:]))
-    
+    datos_usuario={}
+    objetivo=""
+
     if(usuario[0]==0):
         mensaje_retornar="Hola soy Wanly, tu amigo nutricionista. Dime tu nombre, edad, peso y talla"
     else:
@@ -215,20 +251,24 @@ async def webhook(request: Request):
                 
                 print("Todos los datos del usuario confirmados")
 
-                plan_nutricional=contador_calorias(usuario[1]["nombre"],usuario[1]["talla"],usuario[1]["peso"],usuario[1]["edad"],usuario[1]["objetivo"])
-
-                mensaje_retornar=plan_nutricional
-
                 await update_usuario(int(sender_number[10:]),usuario[1]["nombre"],usuario[1]["peso"],usuario[1]["talla"],usuario[1]["edad"],objetivo,True,calorias_dia=1,litros_dia=2.2)
 
             else:
 
                 if(incoming_msg.lower()=="si"): 
-                    mensaje_retornar="Perfecto ya esta registrado"
-                    await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo,True)
+
+                    plan_nutricional=contador_calorias(usuario[1]["nombre"],usuario[1]["talla"],usuario[1]["peso"],usuario[1]["edad"],usuario[1]["objetivo"])
+
+                    mensaje_retornar=plan_nutricional
+
+                    guardar_info=True
+
+                
+
                 elif(incoming_msg.lower()=="no"): 
                     mensaje_retornar="Digame su objetivo porfavor"
                     await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo)
+                
                 else:
                     #Pedir de nuevo el objetivo
                     objetivo=incoming_msg
@@ -273,5 +313,12 @@ async def webhook(request: Request):
             to=sender_number
         )
 
+    if(guardar_info==True):
+        parseo_dic=parseo_openai(mensaje_retornar)
+
+        print(parseo_dic)
+
+        await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo,True,parseo_dic["calorias"],parseo_dic["litros"])
+        
 
     return "Hello"

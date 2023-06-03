@@ -30,6 +30,6 @@ async def insertar_usuario(numero_usuario,nombre="",peso=0.0,talla=0.0,objetivo=
     return arr_retornar
 
 
-async def update_usuario(numero_usuario,nombre="",peso=0.0,talla=0.0,edad=0,objetivo="",objetivo_confirmado=False,calorias_dia=0,litros_dia=0.0):
+async def update_usuario(numero_usuario,nombre="",peso=0.0,talla=0.0,edad=0,objetivo="",objetivo_confirmado=False,calorias_dia="",litros_dia=0.0):
     new_user = {'numero': numero_usuario, 'nombre':nombre,'peso':peso,'talla':talla,'edad':edad,'objetivo':objetivo,'objetivo_confirmado':objetivo_confirmado,'calorias_dia':calorias_dia,'litros_dia':litros_dia}
     supabase_client.table("Usuarios").update(new_user).eq("numero", numero_usuario).execute()

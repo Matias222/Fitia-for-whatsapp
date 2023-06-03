@@ -7,7 +7,7 @@ from pydub import AudioSegment
 from moviepy.editor import AudioFileClip
 from bd_functions import insertar_usuario,update_usuario
 import gender_guesser.detector as gender
-
+import json
 
 load_dotenv()
 
@@ -64,4 +64,77 @@ def calcular_calorias(query):
     return result
 
 
-calcular_calorias("")
+def contador_calorias(nombre,talla,peso,edad,objetivo):
+    
+    detector = gender.Detector()
+    genero=""
+
+    if (detector.get_gender(nombre) == "male"): genero="hombre"
+    else: genero="mujer"
+
+    query = {"edad":edad,"peso":peso,"talla":talla,"genero":genero,"objetivos":objetivo}
+    
+    ej1= {"edad":20,"peso":89,"talla":1.76,"genero":"hombre","objetivo":"Bajar de peso 10k"}
+    ej2= {"edad":38,"peso":72,"talla":1.66,"genero":"mujer","objetivo":"Bajar de peso 5k"}
+
+    print(query)
+
+    completion = openai.ChatCompletion.create(
+        
+        model="gpt-3.5-turbo",
+        messages=[
+            
+            {"role": "system","content": """Eres un nutricionista experto, dado mi edad, peso, talla, genero y objetivos. Calcula la cantidad maxima de calorias que debo consumir en 1 dia y cuantos litros de agua debo tomar, se conciso."""},
+            
+            {"role": "system", "name":"example_user", "content":str(ej1)},
+            {"role": "system", "name": "example_assistant", "content": "{\"Calorias\":2100,\"Agua\":2}"},
+
+            {"role": "system", "name":"example_user", "content":str(ej2)},
+            {"role": "system", "name": "example_assistant", "content": "{\"Calorias\":1600,\"Agua\":1.8"},
+
+            {"role":"user","content":str(query)}
+
+        ],
+        temperature=0,
+        max_tokens=300,
+    )
+
+    result = completion.choices[0].message["content"]
+    
+    print(result)
+
+    return result
+
+def parseo_openai(query):
+
+    prompt="""Tu unica funcion es dado el input del usuario, devolver un JSON con dos caracteristicas, calorias y litros.
+    Usuario: Basándome en los datos que me proporcionaste, para lograr tu objetivo de bajar 10 kilos, deberías consumir alrededor de 2000 calorías al día y tomar al menos 2 litros de agua diariamente. Es importante que tengas en cuenta que estos valores son aproximados y que pueden variar dependiendo de tu nivel de actividad física y otros factores individuales. Además, es recomendable que consultes con un nutricionista para que te brinde una dieta personalizada y adecuada a tus necesidades.
+    AI: {"calorias":"2000","litros":2}
+
+    Usuario: Para una mujer de 21 años, con un peso de 89 kg, una talla de 1.76 m y un objetivo de bajar 10 kg, se recomienda un consumo diario de aproximadamente 1800-2000 calorías. Además, se recomienda tomar al menos 1.8 litros de agua al día. Es importante recordar que estos son valores aproximados y que pueden variar según el nivel de actividad física y otros factores individuales. Es recomendable consultar con un nutricionista para obtener una evaluación más precisa y personalizada.  
+    AI: {"calorias":"1800-2000","litros":1.8}
+
+    Usuario: %s
+    AI: """%(query)
+
+    response = openai.Completion.create(
+        model='text-davinci-003',
+        prompt=prompt,
+        temperature=0,
+        max_tokens= 256
+    )
+    
+    result = response.choices[0]['text']
+    
+    print(result)
+
+    ans={}
+    try: ans=json.loads(result)
+    except: ans={}
+
+    print(ans)
+
+    return ans
+
+ans=contador_calorias("Matias",1.76,89,21,"Bajar 10 kilos")
+parseo_openai(ans)
