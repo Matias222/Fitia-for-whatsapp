@@ -3,8 +3,7 @@ import os
 # Import database and ORM
 import supabase
 from dotenv import load_dotenv
-import datetime
-import asyncio
+from datetime import datetime
 
 load_dotenv()
 
@@ -34,7 +33,11 @@ async def insertar_usuario(numero_usuario,nombre="",peso=0.0,talla=0.0,objetivo=
 async def update_usuario(numero_usuario,nombre="",peso=0.0,talla=0.0,edad=0,objetivo="",objetivo_confirmado=False,calorias_dia="",litros_dia=0.0):
     new_user = {'numero': numero_usuario, 'nombre':nombre,'peso':peso,'talla':talla,'edad':edad,'objetivo':objetivo,'objetivo_confirmado':objetivo_confirmado,'calorias_dia':calorias_dia,'litros_dia':litros_dia}
     supabase_client.table("Usuarios").update(new_user).eq("numero", numero_usuario).execute()
-    
+
+async def update_estado(numero_usuario,estado):
+    new_user = {'estado':estado}
+    supabase_client.table("Usuarios").update(new_user).eq("numero", numero_usuario).execute()
+
 
 async def existe_usuario(numero_usuario):
     response = supabase_client.table("Usuarios").select("*").eq('numero',numero_usuario).execute()
@@ -107,6 +110,7 @@ async def recuperar_comida_noche(numero_usuario, fecha):
     
     #print(response.data[0]["comidas"])
     return {}
+<<<<<<< HEAD
 
 async def update_temprano(numero_usuario, fecha, tempra=[]):
     new_temprano = {
@@ -137,3 +141,5 @@ if __name__ == "__main__":
     # Close the event loop
     loop.close()
 """
+=======
+>>>>>>> b6adcd2a3124ac4a027b81b4a83827e144c5637b

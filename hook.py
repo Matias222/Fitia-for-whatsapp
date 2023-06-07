@@ -3,18 +3,13 @@ from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from dotenv import load_dotenv
 from datetime import datetime
-from moviepy.editor import AudioFileClip
-from bd_functions import insertar_usuario,update_usuario
 
-import gender_guesser.detector as gender
-import tempfile
+from bd_functions import insertar_usuario,update_usuario, update_estado
+from aux_functions import audio_2_text, identificar_confirmacion, verificar_datos_bd, verificar_datos_usuario, guardar_plan_personalizado
+from openai_calls import plan_personalizado, parseo_info, segmentador
+
 import os
-import requests
-import supabase
-import random
 import openai
-import json
-import time
 
 load_dotenv()
 
@@ -28,130 +23,43 @@ client = Client(account_sid, auth_token)
 app = FastAPI()
 
 
-def contador_calorias(nombre,talla,peso,edad,objetivo):
-    
-    detector = gender.Detector()
-    genero=""
 
-    if (detector.get_gender(nombre) == "male"): genero="hombre"
-    else: genero="mujer"
 
-    query = {"edad":edad,"peso":peso,"talla":talla,"genero":genero,"objetivos":objetivo}
-    
-    ej1= {"edad":20,"peso":89,"talla":1.76,"genero":"hombre","objetivo":"Bajar de peso 10k"}
-    ej2= {"edad":38,"peso":72,"talla":1.66,"genero":"mujer","objetivo":"Bajar de peso 5k"}
+def leer_objetivo(incoming_msg,datos_usuario,sender_number,funciones_al_finalizar,objetivo):
 
-    print(query)
+    clasificar_afirmacion=identificar_confirmacion(incoming_msg)
 
-    completion = openai.ChatCompletion.create(
+    print(incoming_msg,datos_usuario,sender_number,funciones_al_finalizar)
+    print(clasificar_afirmacion)
+
+    if(clasificar_afirmacion=="SI"): 
+
+        plan_nutricional=plan_personalizado(datos_usuario["nombre"],datos_usuario["talla"],datos_usuario["peso"],datos_usuario["edad"],objetivo)
+
+        funciones_al_finalizar.append((guardar_plan_personalizado,plan_nutricional,sender_number,datos_usuario,objetivo))
+
+        funciones_al_finalizar.append((update_estado,int(sender_number[10:]),"INICIO"))
+
+        return plan_nutricional
+
+    elif(clasificar_afirmacion=="NO"): 
+
+        funciones_al_finalizar.append((update_usuario,int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo))
+
+        return "Digame su objetivo porfavor"
+
+    else:
+
+        #Pedir de nuevo el objetivo
+        objetivo=incoming_msg
         
-        model="gpt-3.5-turbo",
-        messages=[
-            
-            {"role": "system","content": """Eres un nutricionista experto, dado mi edad, peso, talla, genero y objetivos. Calcula la cantidad maxima de calorias que debo consumir en 1 dia y cuantos litros de agua debo tomar, se conciso."""},
-            
-            {"role": "system", "name":"example_user", "content":str(ej1)},
-            {"role": "system", "name": "example_assistant", "content": "{\"Calorias\":2100,\"Agua\":2}"},
+        funciones_al_finalizar.append((update_usuario,int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo))
 
-            {"role": "system", "name":"example_user", "content":str(ej2)},
-            {"role": "system", "name": "example_assistant", "content": "{\"Calorias\":1600,\"Agua\":1.8"},
+        return "Su objetivo a alcanzar es, \""+str(objetivo)+"\", es correcto?"
 
-            {"role":"user","content":str(query)}
-
-        ],
-        temperature=0,
-        max_tokens=300,
-    )
-
-    result = completion.choices[0].message["content"]
-    
-    print(result)
-
-    return result
-
-def parseo_info(query):
-
-    prompt="""Tu unica funcion es dado el input del usuario, devolver un JSON con cuatro caracteristicas, nombre, peso, talla y edad.
-    Usuario: Hola soy Matias, mido 1.77 y peso 86.
-    AI: {"nombre":"Matias","talla":1.77,"peso":86}
-
-    Usuario: Buenas tardes me llamo Juan Diego, mi altura es de 2.11 y peso 95kg
-    AI: {"nombre":"Juan Diego","talla":2.11,"peso":95}
-
-    Usuario: Hola soy Paolo
-    AI: {"nombre":"Paolo"}
-
-    Usuario: Me llamo Diego, tengo 21, mido 1.77 y peso 88
-    AI: {"nombre":"Diego","talla":1.77,"peso":88,"edad":21}
-    
-    Usuario: %s
-    AI: """%(query)
-
-    response = openai.Completion.create(
-        model='text-davinci-003',
-        prompt=prompt,
-        temperature=0,
-        max_tokens= 256
-    )
-    
-    result = response.choices[0]['text']
-    
-    print(result)
-
-    ans={}
-    try: ans=json.loads(result)
-    except: ans={}
-
-    print(ans)
-
-    return ans
-
-def parseo_openai(query):
-
-    prompt="""Tu unica funcion es dado el input del usuario, devolver un JSON con dos caracteristicas, calorias y litros.
-    Usuario: Basándome en los datos que me proporcionaste, para lograr tu objetivo de bajar 10 kilos, deberías consumir alrededor de 2000 calorías al día y tomar al menos 2 litros de agua diariamente. Es importante que tengas en cuenta que estos valores son aproximados y que pueden variar dependiendo de tu nivel de actividad física y otros factores individuales. Además, es recomendable que consultes con un nutricionista para que te brinde una dieta personalizada y adecuada a tus necesidades.
-    AI: {"calorias":"2000","litros":2}
-
-    Usuario: Para una mujer de 21 años, con un peso de 89 kg, una talla de 1.76 m y un objetivo de bajar 10 kg, se recomienda un consumo diario de aproximadamente 1800-2000 calorías. Además, se recomienda tomar al menos 1.8 litros de agua al día. Es importante recordar que estos son valores aproximados y que pueden variar según el nivel de actividad física y otros factores individuales. Es recomendable consultar con un nutricionista para obtener una evaluación más precisa y personalizada.  
-    AI: {"calorias":"1800-2000","litros":1.8}
-
-    Usuario: %s
-    AI: """%(query)
-
-    response = openai.Completion.create(
-        model='text-davinci-003',
-        prompt=prompt,
-        temperature=0,
-        max_tokens= 256
-    )
-    
-    result = response.choices[0]['text']
-    
-    print(result)
-
-    ans={}
-    try: ans=json.loads(result)
-    except: ans={}
-
-    print(ans)
-
-    return ans
-
-
-def transcribe_audio(audio_file):
-
-    audio_file = open(audio_file, "rb")
-    transcript = openai.Audio.transcribe("whisper-1", audio_file,language="es")
-    transcript = str(transcript["text"])
-
-    print("Transcription complete")
-
-    return transcript
 
 @app.post("/bot")
 async def webhook(request: Request):
-
-    guardar_info=False
 
     message_body = await request.form()
     
@@ -168,39 +76,13 @@ async def webhook(request: Request):
     if 'MediaContentType0' in message_body:
 
         media_type = message_body['MediaContentType0']
-        
+        transcription = ""
+
         if media_type.startswith('audio/'):
+           
             audio_file = await request.form()
-            audio_data = audio_file['MediaUrl0']
-            
-            # Save the audio file as .mp3
-            
-            transcription=""
-
-            nombre_file=random.randint(1, int(1e9))
-
-            while(1):
-                if os.path.exists(str(nombre_file)+".webm")==0: break
-                nombre_file=random.randint(1, int(1e9))
-
-            nombre_file=str(nombre_file)+".webm"
-
-            with open(nombre_file, "wb") as buffer: 
-                response = requests.get(audio_data)
-                buffer.write(response.content)
-
-            clip = AudioFileClip(nombre_file)
-
-            nombre_file_mp3=nombre_file[0:-5]+".mp3"
-
-            clip.write_audiofile(nombre_file_mp3, codec="mp3")
-
-            transcription=transcribe_audio(nombre_file_mp3)
-
-            os.remove(nombre_file)
-            os.remove(nombre_file_mp3)
-
-            print(transcription)
+           
+            transcription = audio_2_text(audio_file)
 
             mensaje_retornar = "Received an audio file. Audio saved as .mp3."
         else:
@@ -209,116 +91,91 @@ async def webhook(request: Request):
         incoming_msg=transcription
         mensaje_retornar="audio"
    
-    else:
-        # Handle text messages
-        mensaje_retornar="texto"
-
     print(sender_number[10:])
 
+
+    funciones_al_finalizar=[]
     usuario=await insertar_usuario(int(sender_number[10:]))
-    datos_usuario={}
+    datos_usuario=usuario[1]
     objetivo=""
-
-    if(usuario[0]==0):
-        mensaje_retornar="Hola soy Wanly, tu amigo nutricionista. Dime tu nombre, edad, peso y talla"
-    else:
     
+    
+    if("estado" in datos_usuario and datos_usuario["estado"]=="CAMBIO DE OBJETIVO"):
+        
+        objetivo=datos_usuario["objetivo"]
+        mensaje_retornar=leer_objetivo(incoming_msg,datos_usuario,sender_number,funciones_al_finalizar,objetivo)
 
-        falta_info=[]
+    else:
 
-        datos_usuario={"nombre":"","talla":0,"peso":0,"edad":0}
-
-        if(usuario[1]["nombre"]==""): falta_info.append("nombre")
-        else: datos_usuario["nombre"]=usuario[1]["nombre"]
-   
-        for categoria in datos_usuario:
-            if(categoria!="nombre"):
-                if(usuario[1][categoria]==0): falta_info.append(categoria)
-                else: datos_usuario[categoria]=usuario[1][categoria]
-
-        print(datos_usuario)
-        print(falta_info)
-
-        if(falta_info==[]):
-            print("Usuario ya creado exitosamente")
-
-            objetivo=usuario[1]["objetivo"]
-            objetivo_confirmado=usuario[1]["objetivo_confirmado"]
-
-            print(objetivo,objetivo_confirmado)
-
-            if(objetivo_confirmado==True):
-                
-               #Aca empieza el dictado de comidas
-
-                mensaje_retornar="GAAAA"
-                    
-            else:
-
-                if(incoming_msg.lower()=="si"): 
-
-                    plan_nutricional=contador_calorias(usuario[1]["nombre"],usuario[1]["talla"],usuario[1]["peso"],usuario[1]["edad"],usuario[1]["objetivo"])
-
-                    mensaje_retornar=plan_nutricional
-
-                    guardar_info=True
-
-                
-
-                elif(incoming_msg.lower()=="no"): 
-                    mensaje_retornar="Digame su objetivo porfavor"
-                    await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo)
-                
-                else:
-                    #Pedir de nuevo el objetivo
-                    objetivo=incoming_msg
-                    mensaje_retornar="Su objetivo a alcanzar es, \""+str(objetivo)+"\", es correcto? Para confirmar escriba Si, caso contrario, No"
-                    await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo)
-
+        if(usuario[0]==0):
+        
+            mensaje_retornar="Hola soy Wanly, tu amigo nutricionista. Dime tu nombre, edad, peso y talla"
+        
         else:
 
-            dic=parseo_info(incoming_msg)
 
-            if(dic=={}): mensaje_retornar="Hubo un error porfavor vuelva a introducir sus datos"
-            else:
+            datos_usuario={"nombre":"","talla":0,"peso":0,"edad":0}
+
+            falta_info=verificar_datos_bd(datos_usuario,usuario[1])
+
+            if(falta_info==[]):
                 
-                nuevo_falta_info=[]
+                objetivo=usuario[1]["objetivo"]
+                objetivo_confirmado=usuario[1]["objetivo_confirmado"]
 
-                if("nombre" in falta_info):
-                    if "nombre" not in dic: nuevo_falta_info.append("nombre")
-                    else: datos_usuario["nombre"]=dic["nombre"]
-            
-                for categoria in datos_usuario:
-                    if(categoria!="nombre"):
-                        if(categoria in falta_info):
-                            if categoria not in dic:  nuevo_falta_info.append(categoria)
-                            else: datos_usuario[categoria]=dic[categoria]
+                print(objetivo,objetivo_confirmado)
 
-                print(nuevo_falta_info)
-                nombre=datos_usuario["nombre"]
+                if(objetivo_confirmado==True):
+                    
+                    #Antes del login el bot no es inteligente
 
-                if(len(nuevo_falta_info)==0): mensaje_retornar=f"Genial, {nombre}, ahora dime cuales son tus objetivos alimenticios"
-                elif(len(nuevo_falta_info)==1): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]}"
-                elif(len(nuevo_falta_info)==2): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]} y {nuevo_falta_info[1]}"
-                elif(len(nuevo_falta_info)==3): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]}, {nuevo_falta_info[1]} y {nuevo_falta_info[2]}"
-                else: mensaje_retornar="Ya p no me dijiste tus datos"
+                    tipo=segmentador(incoming_msg)
 
-                await update_usuario(int(sender_number[10:]),nombre,datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"])
-  
+                    if(tipo=="Reporte de comidas"): #TO DO
+                        #TO DO
+                        print("Reporte de comidas")
 
-    message = client.messages \
-    .create(
-            body=mensaje_retornar,
-            from_=numero_from,
-            to=sender_number
-        )
+                    elif(tipo=="Cambio de objetivo"): #DONE
+                        
+                        print("Cambio de objetivo")
 
-    if(guardar_info==True):
-        parseo_dic=parseo_openai(mensaje_retornar)
+                        mensaje_retornar="Digame cual es su objetivo porfavor"
 
-        print(parseo_dic)
+                        funciones_al_finalizar.append((update_estado,int(sender_number[10:]),"CAMBIO DE OBJETIVO"))
 
-        await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo,True,parseo_dic["calorias"],parseo_dic["litros"])
+                    elif(tipo=="Consejo nutricional"): #TO DO
+                        #Buscar las calorias de la comida a comer con Embeddings + wrapper
+                        print("Consejo nutricional")
+                    
+                    else: #TO DO
+                        #Query a OpenAI
+                        print("Otrossss")
+        
+                else:
+                    
+                    mensaje_retornar=leer_objetivo(incoming_msg,datos_usuario,sender_number,funciones_al_finalizar,objetivo)
 
+            else:
 
-    return "Hello"
+                dic_datos=parseo_info(incoming_msg)
+                
+                if(dic_datos=={}): mensaje_retornar="Hubo un error porfavor vuelva a introducir sus datos"
+                else:
+                    
+                    nuevo_falta_info=verificar_datos_usuario(datos_usuario,dic_datos,falta_info)
+
+                    nombre=datos_usuario["nombre"]
+
+                    if(len(nuevo_falta_info)==0): mensaje_retornar=f"Genial, {nombre}, ahora dime cuales son tus objetivos alimenticios"
+                    elif(len(nuevo_falta_info)==1): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]}"
+                    elif(len(nuevo_falta_info)==2): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]} y {nuevo_falta_info[1]}"
+                    elif(len(nuevo_falta_info)==3): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]}, {nuevo_falta_info[1]} y {nuevo_falta_info[2]}"
+                    else: mensaje_retornar="Ya p no me dijiste tus datos"
+                    
+                    funciones_al_finalizar.append((update_usuario,int(sender_number[10:]),nombre,datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"]))
+        
+    message = client.messages.create(body=mensaje_retornar,from_=numero_from,to=sender_number)
+    
+    for call in funciones_al_finalizar:
+        function, *args = call
+        await function(*args)
