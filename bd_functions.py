@@ -108,6 +108,25 @@ async def recuperar_comida_noche(numero_usuario, fecha):
     #print(response.data[0]["comidas"])
     return {}
 
+async def update_temprano(numero_usuario, fecha, tempra=[]):
+    new_temprano = {
+        'temprano':tempra
+    }
+    supabase_client.table("user_history").update(new_temprano).eq("user_id",numero_usuario).eq('dia',fecha).execute()
+
+async def update_tarde(numero_usuario, fecha, tard=[]):
+    new_tarde = {
+        'tarde':tard
+    }
+    supabase_client.table("user_history").update(new_tarde).eq("user_id",numero_usuario).eq('dia',fecha).execute()
+
+async def update_noche(numero_usuario, fecha, noch=[]):
+    new_noche = {
+        'noche':noch
+    }
+    supabase_client.table("user_history").update(new_noche).eq("user_id",numero_usuario).eq('dia',fecha).execute()
+
+
 """
 if __name__ == "__main__": 
     loop = asyncio.get_event_loop()

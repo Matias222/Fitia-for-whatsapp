@@ -6,7 +6,10 @@ from bd_functions import (
     recuperar_comida_temprano,
     recuperar_comida_tarde,
     update_user_history,
-    insertar_user_history
+    insertar_user_history,
+    update_temprano,
+    update_tarde,
+    update_noche
 )
 
 import openai
@@ -94,16 +97,18 @@ def existe_keyword(mensaje):
 
 async def insertar_o_actualizar(usuario_existe, numero_usuario, fecha, alimento, mensaje, temprano, tarde, noche):
     if usuario_existe:
-        arreglo_temprano = await recuperar_comida_temprano(numero_usuario, fecha)
-        arreglo_tarde = await recuperar_comida_tarde(numero_usuario, fecha)
-        arreglo_noche = await recuperar_comida_noche(numero_usuario, fecha)
         if temprano:
+            arreglo_temprano = await recuperar_comida_temprano(numero_usuario, fecha)
             arreglo_temprano.append({"Alimento":alimento})
+            await update_temprano(numero_usuario, fecha, arreglo_temprano)
         elif tarde:
+            arreglo_tarde = await recuperar_comida_tarde(numero_usuario, fecha)
             arreglo_tarde.append({"Alimento":alimento})
+            await update_tarde(numero_usuario, fecha, arreglo_tarde)
         elif noche:
+            arreglo_noche = await recuperar_comida_noche(numero_usuario, fecha)
             arreglo_noche.append({"Alimento":alimento})
-        await update_user_history(numero_usuario, 0.0, 0.0, mensaje, arreglo_temprano, arreglo_tarde, arreglo_noche)
+            await update_noche(numero_usuario, fecha, arreglo_noche)
         return "Actualizado"
     else:
         arr_temprano = []
@@ -188,14 +193,12 @@ async def identificar_comida(sender_number, message):
         
     else:
         return ["No existe el usuario", {}]
-    
-"""
+
 if __name__ == "__main__": 
     loop = asyncio.get_event_loop()
 
     # Run the async function in the event loop
-    loop.run_until_complete(identificar_comida("whatsapp:+51936404731","He desayunado huevo frito con tocino"))
+    loop.run_until_complete(identificar_comida("whatsapp:+51936404731","Almorce tallarin verde"))
 
     # Close the event loop
     loop.close() 
-"""
