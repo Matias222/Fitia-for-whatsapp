@@ -110,7 +110,6 @@ async def recuperar_comida_noche(numero_usuario, fecha):
     
     #print(response.data[0]["comidas"])
     return {}
-<<<<<<< HEAD
 
 async def update_temprano(numero_usuario, fecha, tempra=[]):
     new_temprano = {
@@ -141,5 +140,3 @@ if __name__ == "__main__":
     # Close the event loop
     loop.close()
 """
-=======
->>>>>>> b6adcd2a3124ac4a027b81b4a83827e144c5637b
