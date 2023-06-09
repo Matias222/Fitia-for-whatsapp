@@ -7,9 +7,12 @@ from datetime import datetime
 from bd_functions import insertar_usuario,update_usuario, update_estado
 from aux_functions import audio_2_text, identificar_confirmacion, verificar_datos_bd, verificar_datos_usuario, guardar_plan_personalizado
 from openai_calls import plan_personalizado, parseo_info, segmentador
+from identificador import identificar_comida
+
 
 import os
 import openai
+import random
 
 load_dotenv()
 
@@ -135,6 +138,14 @@ async def webhook(request: Request):
                         #TO DO
                         print("Reporte de comidas")
 
+                        #counting_calories_service()
+
+                        await identificar_comida(sender_number,incoming_msg)
+
+                        calorias=random.randint(100,500)
+
+                        mensaje_retornar="Sus calorias consumidas son "+str(calorias)
+
                     elif(tipo=="Cambio de objetivo"): #DONE
                         
                         print("Cambio de objetivo")
@@ -150,7 +161,8 @@ async def webhook(request: Request):
                     else: #TO DO
                         #Query a OpenAI
                         print("Otrossss")
-        
+                        mensaje_retornar="\U0001F600"
+
                 else:
                     
                     mensaje_retornar=leer_objetivo(incoming_msg,datos_usuario,sender_number,funciones_al_finalizar,objetivo)

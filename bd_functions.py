@@ -3,7 +3,7 @@ import os
 # Import database and ORM
 import supabase
 from dotenv import load_dotenv
-from datetime import datetime
+import datetime
 
 load_dotenv()
 
@@ -47,19 +47,17 @@ async def existe_usuario(numero_usuario):
     
     return False
 
-async def insertar_user_history(id_numero,calorias=0.0,litros=0.0,chat="", temprano=[], tarde=[], noche=[]):
-    db_item = supabase_client.table('user_history').select('*').eq('user_id', id_numero).execute()
+async def insertar_user_history(id_numero,calorias=0.0,litros=0.0,chat="", temprano=[], tarde=[], noche=[],fecha=None):
+    db_item, _ = supabase_client.table('user_history').select('*').eq('user_id', id_numero).eq('dia',fecha).execute()
     
     fecha_actual = datetime.date.today()
     fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
     
     arr_retornar=[1,{}]
-    #print("DBITEM",db_item.data)
-    
-    if len(db_item.data) == 0:
+ 
+    if len(db_item[1]) == 0:
         new_user = {'user_id': id_numero, 'dia':fecha_actual_str, 'calorias':calorias, 'litros':litros, 'chat':chat, "temprano":temprano, "tarde":tarde, "noche":noche}
-        #print(new_user)
-        #new_user_json = json.dumps(new_user)
+        print(new_user)
         supabase_client.table('user_history').insert(new_user).execute()
         
         arr_retornar[0]=0
