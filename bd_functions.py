@@ -47,12 +47,13 @@ async def existe_usuario(numero_usuario):
     
     return False
 
-async def insertar_user_history(id_numero,calorias=0.0,litros=0.0,chat="", temprano=[], tarde=[], noche=[],fecha=None):
-    db_item, _ = supabase_client.table('user_history').select('*').eq('user_id', id_numero).eq('dia',fecha).execute()
+async def insertar_user_history(id_numero,calorias=0.0,litros=0.0,chat="", temprano=[], tarde=[], noche=[]):
     
     fecha_actual = datetime.date.today()
     fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
-    
+
+    db_item, _ = supabase_client.table('user_history').select('*').eq('user_id', id_numero).eq('dia',fecha_actual_str).execute()
+
     arr_retornar=[1,{}]
  
     if len(db_item[1]) == 0:
@@ -126,6 +127,16 @@ async def update_noche(numero_usuario, fecha, noch=[]):
         'noche':noch
     }
     supabase_client.table("user_history").update(new_noche).eq("user_id",numero_usuario).eq('dia',fecha).execute()
+
+async def update_calorias(numero_usuario,calorias):
+    fecha_actual = datetime.date.today()
+    fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
+
+    new_calorias = {
+        'calorias':calorias
+    }
+    supabase_client.table("user_history").update(new_calorias).eq("user_id",numero_usuario).eq('dia',fecha_actual_str).execute()
+
 
 
 """

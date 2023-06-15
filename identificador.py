@@ -11,6 +11,7 @@ from bd_functions import (
     update_tarde,
     update_noche
 )
+from openai_calls import sugerencias
 
 import openai
 import json
@@ -125,7 +126,7 @@ async def insertar_o_actualizar(usuario_existe, numero_usuario, fecha, alimento,
             arr_tarde.append(alimento)
         elif noche:
             arr_noche.append(alimento)
-        await insertar_user_history(id_numero=numero_usuario, calorias=0.0, litros=0.0, chat=mensaje, temprano=arr_temprano, tarde=arr_tarde, noche=arr_noche,fecha=fecha)
+        await insertar_user_history(id_numero=numero_usuario, calorias=0.0, litros=0.0, chat=mensaje, temprano=arr_temprano, tarde=arr_tarde, noche=arr_noche)
         print("UPDATE")
         return "Insertado"
 
@@ -137,8 +138,12 @@ async def identificar_comida(sender_number,message):
     
     if(alimento == {}):
         return "No hay alimento"
+
     
     keyword = existe_keyword(arreglo_mensaje_minuscula)
+    
+    print(keyword)
+
     fecha_hoy = datetime.date.today()
     print(fecha_hoy)
     usuario_existe = await existe_user_history_en_fecha(int(sender_number[10:]), fecha_hoy)
@@ -183,7 +188,8 @@ async def identificar_comida(sender_number,message):
                 await insertar_o_actualizar(usuario_existe, int(sender_number[10:]), fecha_hoy, alimento["Alimento"], message, False, False, True)
                 return ["El usuario existe", {"Comida": alimento["Alimento"].lower()}]
 
-""" Only for testing purposes
+# Only for testing purposes
+"""
 if __name__ == "__main__": 
     loop = asyncio.get_event_loop()
 
@@ -192,4 +198,11 @@ if __name__ == "__main__":
 
     # Close the event loop
     loop.close() 
+"""
+"""
+if __name__ == "__main__":
+    query = "¿Que dirias si te digo que no comi nada para el almuerzo?"
+    print('\n')
+    res = sugerencias(query)
+    print(f'Esta es tu respuesta : {res}')
 """

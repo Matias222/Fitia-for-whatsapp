@@ -4,9 +4,9 @@ from twilio.rest import Client
 from dotenv import load_dotenv
 from datetime import datetime
 
-from bd_functions import insertar_usuario,update_usuario, update_estado
+from bd_functions import insertar_usuario,update_usuario, update_estado, insertar_user_history, update_calorias
 from aux_functions import audio_2_text, identificar_confirmacion, verificar_datos_bd, verificar_datos_usuario, guardar_plan_personalizado
-from openai_calls import plan_personalizado, parseo_info, segmentador
+from openai_calls import plan_personalizado, parseo_info, segmentador, sugerencias
 from identificador import identificar_comida
 
 
@@ -138,13 +138,18 @@ async def webhook(request: Request):
                         #TO DO
                         print("Reporte de comidas")
 
-                        #counting_calories_service()
+
+                        datos_comida=await insertar_user_history(id_numero=int(sender_number[10:]))
+
+                        calorias_day=datos_comida[1]["calorias"]
 
                         await identificar_comida(sender_number,incoming_msg)
 
                         calorias=random.randint(100,500)
 
-                        mensaje_retornar="Sus calorias consumidas son "+str(calorias)
+                        mensaje_retornar="Su consumo de calorias hasta ahora era de %d"%calorias_day +"\n" "Con lo que acaba de ingerir aumento a %d"%calorias
+
+                        funciones_al_finalizar.append((update_calorias,int(sender_number[10:]),calorias+calorias_day))
 
                     elif(tipo=="Cambio de objetivo"): #DONE
                         
@@ -156,8 +161,10 @@ async def webhook(request: Request):
 
                     elif(tipo=="Consejo nutricional"): #TO DO
                         #Buscar las calorias de la comida a comer con Embeddings + wrapper
-                        print("Consejo nutricional")
-                    
+                        mensaje_retornar = sugerencias(incoming_msg)
+                        print("Consejo nutricional:")
+                        print(mensaje_retornar)
+
                     else: #TO DO
                         #Query a OpenAI
                         print("Otrossss")
