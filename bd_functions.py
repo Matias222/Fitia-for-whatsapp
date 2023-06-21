@@ -4,7 +4,6 @@ import os
 import supabase
 from dotenv import load_dotenv
 import datetime
-import asyncio
 
 load_dotenv()
 
@@ -48,12 +47,13 @@ async def existe_usuario(numero_usuario):
     
     return False
 
-async def insertar_user_history(id_numero,calorias=0.0,litros=0.0,chat="", temprano=[], tarde=[], noche=[],fecha=None):
-    db_item, _ = supabase_client.table('user_history').select('*').eq('user_id', id_numero).eq('dia',fecha).execute()
+async def insertar_user_history(id_numero,calorias=0.0,litros=0.0,chat="", temprano=[], tarde=[], noche=[]):
     
     fecha_actual = datetime.date.today()
     fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
-    
+
+    db_item, _ = supabase_client.table('user_history').select('*').eq('user_id', id_numero).eq('dia',fecha_actual_str).execute()
+
     arr_retornar=[1,{}]
  
     if len(db_item[1]) == 0:
@@ -128,38 +128,22 @@ async def update_noche(numero_usuario, fecha, noch=[]):
     }
     supabase_client.table("user_history").update(new_noche).eq("user_id",numero_usuario).eq('dia',fecha).execute()
 
-async def get_users_temprano_with_date(fecha):
-    #Se debe de colocar la fecha actual str y borrar el parametro de fecha de la funcion
+async def update_calorias(numero_usuario,calorias):
     fecha_actual = datetime.date.today()
     fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
-    
-    response = supabase_client.table('user_history').select('user_id, temprano').eq('dia', fecha).execute()
-    res = response.data
-    # print(res)
-    
-    return res
-    
-async def get_users_tarde_with_date(fecha):
-    #Se debe de colocar la fecha actual str y borrar el parametro de fecha de la funcion
-    fecha_actual = datetime.date.today()
-    fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
-    
-    response = supabase_client.table('user_history').select('user_id, tarde').eq('dia', fecha).execute()
-    res = response.data
-    # print(res)
-    
-    return res
+    new_calorias = {
+            'calorias':0
+    }
+    try:
+        new_calorias = {
+            'calorias':calorias
+        }
+    except TypeError as e:
+        print("QUE CHUCHA FUE")
 
-async def get_users_noche_with_date(fecha):
-    #Se debe de colocar la fecha actual str y borrar el parametro de fecha de la funcion
-    fecha_actual = datetime.date.today()
-    fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
-    
-    response = supabase_client.table('user_history').select('user_id, noche').eq('dia', fecha).execute()
-    res = response.data
-    # print(res)
-    
-    return res
+    supabase_client.table("user_history").update(new_calorias).eq("user_id",numero_usuario).eq('dia',fecha_actual_str).execute()
+
+
 
 """
 if __name__ == "__main__": 
@@ -171,12 +155,3 @@ if __name__ == "__main__":
     # Close the event loop
     loop.close()
 """
-
-# if __name__ == '__main__':
-#     loop = asyncio.get_event_loop()
-
-#     # Run the async function in the event loop
-#     loop.run_until_complete(get_users_tarde_with_date('2023-06-09'))
-
-#     # Close the event loop
-#     loop.close()

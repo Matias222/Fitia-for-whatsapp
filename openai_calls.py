@@ -32,10 +32,10 @@ def plan_personalizado(nombre,talla,peso,edad,objetivo):
             {"role": "system","content": """Eres un nutricionista experto, dado mi edad, peso, talla, genero y objetivos. Calcula la cantidad maxima de calorias que debo consumir en 1 dia y cuantos litros de agua debo tomar, se conciso pero factualmente correcto."""},
             
             {"role": "system", "name":"example_user", "content":str(ej1)},
-            {"role": "system", "name": "example_assistant", "content": "{\"Calorias\":2100,\"Agua\":2}"},
+            {"role": "system", "name": "example_assistant", "content": "100,Agua:2}"},
 
             {"role": "system", "name":"example_user", "content":str(ej2)},
-            {"role": "system", "name": "example_assistant", "content": "{\"Calorias\":1600,\"Agua\":1.8"},
+            {"role": "system", "name": "example_assistant", "content": "600,Agua:1.8"},
 
             {"role":"user","content":str(query)}
 
@@ -179,4 +179,75 @@ def segmentador(query):
     print(result)
         
     #print(ans)
+    return result
+
+def sugerencias(query):
+    # promp = """Tu principal funcion es brindarle una sugerencia o recomendacion al usuario como si tu fueras un nutricionista experto, es decir, el usuario te brindara un alimento y tu debes de darle una perspectiva clara, como un nutricionista experto, mencionando las ventas y desventajas de consumirla y finalmente concluyendo en si es correcto consumirla o no. 
+    # Usuario: Se me antojo tomarme una gaseosa, ¿Deberia tomarla?
+    # AI: {"Consejo":"La gaseosa tiene un aproximado 160 calorias, ademas que esta puede generar cansancio en tu cuerpo, falta de apetito y flatulencias, por ende no te recomiendo que la consumas"}
+    
+    # Usuario: Tengo ganas de comer una barra de chocolate Sublime ¿Te parece correcto que la coma?
+    # AI: {"Consejo":"Una barra de chocolate tiene aproximadamente 550 calorias, por ende es alta en azucares y sumandole los productos artificiales que esta pueda contener, no es recomendable consumirla en exceso."}
+
+    # Usuario: ¿Esta bien almorzar un plato de fideos acompañado de una ensalada?
+    # AI: {"Consejo":"Los platos de fideos son altos en carbohidratos y añadiendole la ensalada se logra un correcto balance en las proteinas, me parece una eleccion correcta para el almuerzo."}
+
+    # Usuario: Es la hora del desayuno, ¿Te parece bien que desayune un plato de cereales con leche?
+    # AI: {"Consejo":"Los cereales se caracterizan por tener un alto porcentaje de azucares y sumandole las proteinas que pueda obtener la leche, te podria decir que si podrias consumirla pero no en exceso."}
+
+    # Usuario: Voy a cenar una hamburguesa con papas fritas ¿Te parece correcto consumirla como cena?
+    # AI: {"Consejo":"Las hamgurguesa con papas fritas tienen un alto porcentaje de grasas saturadas y elementos artificiales, no son la mejor opcion para cenar de acorde a tus objetivos."}
+
+    # Usuario: Son las 7:40 pm y se me antojo comer un plato de avena con frutas ¿Deberia?
+    # AI: {"Consejo":"La avena se caracteriza por sus altos niveles de fibra y minerales, asimismo, la fruta es el acompañante perfecto para enriquecer el cuerpo de vitaminas, si lo recomendaria que lo consumas."}
+
+    # Usuario: Son las 2:30 am y tengo un antojo de una ensalada de frutas ¿Que opinas?
+    # AI: {"Consejo":"El momento del dia o el orden de los alimentos como la fruta no tienen ninguna influencia en los efectos beneficios de este alimento, si te recomeindo comerla pero no en exceso"}
+
+    # Usuario: ¿Cual es tu perspectiva si te digo que voy a comer una sopa de verduras?
+    # AI: {"Consejo":"La sopa de verduras contiene un indice alto de proteinas y es rica en vitaminas, me parece correcto que la vayas a comer"}
+
+    # Usuario: %s
+    # AI:"""(query)
+
+    completion = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+
+            {"role":"system", "content":"""Tu principal funcion es brindarle una sugerencia o recomendacion al usuario como si tu fueras un nutricionista experto, es decir, el usuario te brindara un alimento y tu debes de darle una perspectiva clara, como un nutricionista experto, mencionando las ventas y desventajas de consumirla y finalmente concluyendo en si es correcto consumirla o no."""},
+            
+            {"role":"system", "name":"example_user", "content":"""Se me antojo tomarme una gaseosa, ¿Deberia tomarla?"""},
+            {"role":"system", "name":"example_assistant", "content":"La gaseosa tiene un aproximado 160 calorias, ademas que esta puede generar cansancio en tu cuerpo, falta de apetito y flatulencias, por ende no te recomiendo que la consumas."},
+
+            {"role":"system", "name":"example_user", "content":"""Tengo ganas de comer una barra de chocolate Sublime ¿Te parece correcto que la coma?"""},
+            {"role":"system", "name":"example_assistant", "content":"Una barra de chocolate tiene aproximadamente 550 calorias, por ende es alta en azucares y sumandole los productos artificiales que esta pueda contener, no es recomendable consumirla en exceso."},
+
+            {"role":"system", "name":"example_user", "content":"""¿Esta bien almorzar un plato de fideos acompañado de una ensalada?"""},
+            {"role":"system", "name":"example_assistant", "content":"Los platos de fideos son altos en carbohidratos y añadiendole la ensalada se logra un correcto balance en las proteinas, me parece una eleccion correcta para el almuerzo."},
+
+            {"role":"system", "name":"example_user", "content":"""Es la hora del desayuno, ¿Te parece bien que desayune un plato de cereales con leche?"""},
+            {"role":"system", "name":"example_assistant", "content":"Los cereales se caracterizan por tener un alto porcentaje de azucares y sumandole las proteinas que pueda obtener la leche, te podria decir que si podrias consumirla pero no en exceso."},
+
+            {"role":"system", "name":"example_user", "content":""" Voy a cenar una hamburguesa con papas fritas ¿Te parece correcto consumirla como cena?"""},
+            {"role":"system", "name":"example_assistant", "content":"Las hamgurguesa con papas fritas tienen un alto porcentaje de grasas saturadas y elementos artificiales, no son la mejor opcion para cenar de acorde a tus objetivos."},
+
+            {"role":"system", "name":"example_user", "content":"""Son las 7:40 pm y se me antojo comer un plato de avena con frutas ¿Deberia?"""},
+            {"role":"system", "name":"example_assistant", "content":"La avena se caracteriza por sus altos niveles de fibra y minerales, asimismo, la fruta es el acompañante perfecto para enriquecer el cuerpo de vitaminas, si lo recomendaria que lo consumas."},
+
+            {"role":"system", "name":"example_user", "content":"""Son las 2:30 am y tengo un antojo de una ensalada de frutas ¿Que opinas?"""},
+            {"role":"system", "name":"example_assistant", "content":"El momento del dia o el orden de los alimentos como la fruta no tienen ninguna influencia en los efectos beneficios de este alimento, si te recomeindo comerla pero no en exceso."},
+
+            {"role":"system", "name":"example_user", "content":"""¿Cual es tu perspectiva si te digo que voy a comer una sopa de verduras?"""},
+            {"role":"system", "name":"example_assistant", "content":"La sopa de verduras contiene un indice alto de proteinas y es rica en vitaminas, me parece correcto que la vayas a comer."},
+        
+            {"role":"user", "content":str(query)}
+        ],
+        temperature=0,
+        max_tokens=300,
+    )
+
+    result = completion.choices[0].message["content"]
+
+    print(result)
+
     return result

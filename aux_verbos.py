@@ -10,4 +10,4 @@ keyWords_confusos = ["comi", "comí", "comimos", "comeremos", "comer", "comemos"
     
 desayuno_palabras = ["desayune", "desayuné" ,"desayunado", "desayuno", "desayunar", "desayunare"]
 almuerzo_palabras = ["almorce", "almorcé", "almuerzo", "almorzare", "almorzado", "almorzar", "almorzamos"]
-cena_palabras = ["cené", "cene" ,"cenare", "cena", "cenamos", "cenado", "cenemos"]
+cena_palabras = ["cené", "cene" ,"cenare", "cena", "cenamos", "cenado", "cenemos","cenar"]

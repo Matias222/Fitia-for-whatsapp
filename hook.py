@@ -3,16 +3,20 @@ from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from dotenv import load_dotenv
 from datetime import datetime
+from openai.embeddings_utils import get_embedding, cosine_similarity
 
-from bd_functions import insertar_usuario,update_usuario, update_estado
+from bd_functions import insertar_usuario,update_usuario, update_estado, insertar_user_history, update_calorias
 from aux_functions import audio_2_text, identificar_confirmacion, verificar_datos_bd, verificar_datos_usuario, guardar_plan_personalizado
-from openai_calls import plan_personalizado, parseo_info, segmentador
+from openai_calls import plan_personalizado, parseo_info, segmentador, sugerencias
 from identificador import identificar_comida
 
 
 import os
 import openai
 import random
+import numpy as np
+import pandas as pd
+
 
 load_dotenv()
 
@@ -26,6 +30,35 @@ client = Client(account_sid, auth_token)
 app = FastAPI()
 
 
+datafile_path = "comidas_embeddings.csv"
+
+df = pd.read_csv(datafile_path)
+df["embedding"] = df.embedding.apply(eval).apply(np.array)
+
+
+def conteo_calorias_service(df, product_description, n=3, pprint=True):
+    product_embedding = get_embedding(
+        product_description,
+        engine="text-embedding-ada-002"
+    )
+    df["similarity"] = df.embedding.apply(lambda x: cosine_similarity(x, product_embedding))
+
+    results = (
+        df.sort_values("similarity", ascending=False)
+        .head(n)
+        .combined.str.replace("Platos: ", "")
+        .str.replace("; Calorias:", ": ")
+    )
+    pruebas = (
+        df.sort_values("similarity", ascending=False)
+        .head(n).Calorias
+    )
+    if pprint:
+        for r in results:
+            print(r[:200])
+            print()
+
+    return pruebas.iloc[0]
 
 
 def leer_objetivo(incoming_msg,datos_usuario,sender_number,funciones_al_finalizar,objetivo):
@@ -134,17 +167,45 @@ async def webhook(request: Request):
 
                     tipo=segmentador(incoming_msg)
 
-                    if(tipo=="Reporte de comidas"): #TO DO
+                    print("Segmentador",tipo)
+
+                    if(tipo=="Reporte de comidas" or tipo=="Reporte de comidas."): #TO DO
                         #TO DO
                         print("Reporte de comidas")
 
-                        #counting_calories_service()
+                        datos_comida=await insertar_user_history(id_numero=int(sender_number[10:]))
 
-                        await identificar_comida(sender_number,incoming_msg)
+                        calorias_day=datos_comida[1]["calorias"]
 
-                        calorias=random.randint(100,500)
+                        json_comidas=await identificar_comida(sender_number,incoming_msg)
 
-                        mensaje_retornar="Sus calorias consumidas son "+str(calorias)
+                        print("Hook",json_comidas)
+
+                        calorias=0
+
+                        mensaje_retornar=""""""
+
+                        alimentos_arr=[]
+
+                        for i in json_comidas:
+                            print(i)
+                            conteo_alimento=0
+                            if(i=="mayonesa"): conteo_alimento=119
+                            else: conteo_alimento=int(conteo_calorias_service(df,i,n=3))
+                            cadena="Alimento "+i.capitalize()+" Calorias "+str(conteo_alimento)
+                            print("Alimento "+i+" Calorias "+str(conteo_alimento))
+                            calorias=conteo_alimento*int(json_comidas[i])+calorias
+                            alimentos_arr.append(cadena)
+
+                        my_string = '\n'.join(alimentos_arr)
+
+                        cal_total=calorias_day+calorias
+                        #mensaje_retornar="Su consumo de calorias hasta ahora era de %d"%calorias_day +"\n" "Con lo que acaba de ingerir aumento a %d"%cal_total
+                        my_string=my_string+"\n"+"Su consumo de calorias hasta ahora era de %d"%calorias_day +"\n" "Con lo que acaba de ingerir aumento a %d"%cal_total
+
+                        mensaje_retornar=my_string
+
+                        funciones_al_finalizar.append((update_calorias,int(sender_number[10:]),int(calorias+calorias_day)))
 
                     elif(tipo=="Cambio de objetivo"): #DONE
                         
@@ -156,8 +217,10 @@ async def webhook(request: Request):
 
                     elif(tipo=="Consejo nutricional"): #TO DO
                         #Buscar las calorias de la comida a comer con Embeddings + wrapper
-                        print("Consejo nutricional")
-                    
+                        mensaje_retornar = sugerencias(incoming_msg)
+                        print("Consejo nutricional:")
+                        print(mensaje_retornar)
+
                     else: #TO DO
                         #Query a OpenAI
                         print("Otrossss")
