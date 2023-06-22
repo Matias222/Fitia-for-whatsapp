@@ -109,148 +109,153 @@ async def webhook(request: Request):
 
     mensaje_retornar=""
 
-    if 'MediaContentType0' in message_body:
-
-        media_type = message_body['MediaContentType0']
-        transcription = ""
-
-        if media_type.startswith('audio/'):
-           
-            audio_file = await request.form()
-           
-            transcription = audio_2_text(audio_file)
-
-            mensaje_retornar = "Received an audio file. Audio saved as .mp3."
-        else:
-            mensaje_retornar = "Received a media file. Currently, only audio files are supported."
-
-        incoming_msg=transcription
-        mensaje_retornar="audio"
-   
-    print(sender_number[10:])
-
-
-    funciones_al_finalizar=[]
-    usuario=await insertar_usuario(int(sender_number[10:]))
-    datos_usuario=usuario[1]
-    objetivo=""
-    
-    
-    if("estado" in datos_usuario and datos_usuario["estado"]=="CAMBIO DE OBJETIVO"):
-        
-        objetivo=datos_usuario["objetivo"]
-        mensaje_retornar=leer_objetivo(incoming_msg,datos_usuario,sender_number,funciones_al_finalizar,objetivo)
-
+    if sender_number == 'SECRETO':
+        mensaje_retornar = incoming_msg
+        numeros = message_body.getlist('numeros')
+        for numero in numeros:
+            numero_enviar = 'whatsapp:+' + numero
+            message = client.messages.create(body=mensaje_retornar,from_=numero_from,to=numero_enviar)
     else:
+        if 'MediaContentType0' in message_body:
 
-        if(usuario[0]==0):
+            media_type = message_body['MediaContentType0']
+            transcription = ""
+
+            if media_type.startswith('audio/'):
+            
+                audio_file = await request.form()
+            
+                transcription = audio_2_text(audio_file)
+
+                mensaje_retornar = "Received an audio file. Audio saved as .mp3."
+            else:
+                mensaje_retornar = "Received a media file. Currently, only audio files are supported."
+
+            incoming_msg=transcription
+            mensaje_retornar="audio"
+
+        print(sender_number[10:])
+
+
+        funciones_al_finalizar=[]
+        usuario=await insertar_usuario(int(sender_number[10:]))
+        datos_usuario=usuario[1]
+        objetivo=""
         
-            mensaje_retornar="Hola soy Wanly, tu amigo nutricionista. Dime tu nombre, edad, peso y talla"
         
+        if("estado" in datos_usuario and datos_usuario["estado"]=="CAMBIO DE OBJETIVO"):
+            
+            objetivo=datos_usuario["objetivo"]
+            mensaje_retornar=leer_objetivo(incoming_msg,datos_usuario,sender_number,funciones_al_finalizar,objetivo)
+
         else:
-
-
-            datos_usuario={"nombre":"","talla":0,"peso":0,"edad":0}
-
-            falta_info=verificar_datos_bd(datos_usuario,usuario[1])
-
-            if(falta_info==[]):
-                
-                objetivo=usuario[1]["objetivo"]
-                objetivo_confirmado=usuario[1]["objetivo_confirmado"]
-
-                print(objetivo,objetivo_confirmado)
-
-                if(objetivo_confirmado==True):
-                    
-                    #Antes del login el bot no es inteligente
-
-                    tipo=segmentador(incoming_msg)
-
-                    print("Segmentador",tipo)
-
-                    if(tipo=="Reporte de comidas" or tipo=="Reporte de comidas."): #TO DO
-                        #TO DO
-                        print("Reporte de comidas")
-
-                        datos_comida=await insertar_user_history(id_numero=int(sender_number[10:]))
-
-                        calorias_day=datos_comida[1]["calorias"]
-
-                        json_comidas=await identificar_comida(sender_number,incoming_msg)
-
-                        print("Hook",json_comidas)
-
-                        calorias=0
-
-                        mensaje_retornar=""""""
-
-                        alimentos_arr=[]
-
-                        for i in json_comidas:
-                            print(i)
-                            conteo_alimento=0
-                            if(i=="mayonesa"): conteo_alimento=119
-                            else: conteo_alimento=int(conteo_calorias_service(df,i,n=3))
-                            cadena="Alimento "+i.capitalize()+" Calorias "+str(conteo_alimento)
-                            print("Alimento "+i+" Calorias "+str(conteo_alimento))
-                            calorias=conteo_alimento*int(json_comidas[i])+calorias
-                            alimentos_arr.append(cadena)
-
-                        my_string = '\n'.join(alimentos_arr)
-
-                        cal_total=calorias_day+calorias
-                        #mensaje_retornar="Su consumo de calorias hasta ahora era de %d"%calorias_day +"\n" "Con lo que acaba de ingerir aumento a %d"%cal_total
-                        my_string=my_string+"\n"+"Su consumo de calorias hasta ahora era de %d"%calorias_day +"\n" "Con lo que acaba de ingerir aumento a %d"%cal_total
-
-                        mensaje_retornar=my_string
-
-                        funciones_al_finalizar.append((update_calorias,int(sender_number[10:]),int(calorias+calorias_day)))
-
-                    elif(tipo=="Cambio de objetivo"): #DONE
-                        
-                        print("Cambio de objetivo")
-
-                        mensaje_retornar="Digame cual es su objetivo porfavor"
-
-                        funciones_al_finalizar.append((update_estado,int(sender_number[10:]),"CAMBIO DE OBJETIVO"))
-
-                    elif(tipo=="Consejo nutricional"): #TO DO
-                        #Buscar las calorias de la comida a comer con Embeddings + wrapper
-                        mensaje_retornar = sugerencias(incoming_msg)
-                        print("Consejo nutricional:")
-                        print(mensaje_retornar)
-
-                    else: #TO DO
-                        #Query a OpenAI
-                        print("Otrossss")
-                        mensaje_retornar="\U0001F600"
-
-                else:
-                    
-                    mensaje_retornar=leer_objetivo(incoming_msg,datos_usuario,sender_number,funciones_al_finalizar,objetivo)
-
+            if(usuario[0]==0):
+            
+                mensaje_retornar="Hola soy Wanly, tu amigo nutricionista. Dime tu nombre, edad, peso y talla"
+            
             else:
 
-                dic_datos=parseo_info(incoming_msg)
-                
-                if(dic_datos=={}): mensaje_retornar="Hubo un error porfavor vuelva a introducir sus datos"
+                datos_usuario={"nombre":"","talla":0,"peso":0,"edad":0}
+
+                falta_info=verificar_datos_bd(datos_usuario,usuario[1])
+
+                if(falta_info==[]):
+                    
+                    objetivo=usuario[1]["objetivo"]
+                    objetivo_confirmado=usuario[1]["objetivo_confirmado"]
+
+                    print(objetivo,objetivo_confirmado)
+
+                    if(objetivo_confirmado==True):
+                        
+                        #Antes del login el bot no es inteligente
+
+                        tipo=segmentador(incoming_msg)
+
+                        print("Segmentador",tipo)
+
+                        if(tipo=="Reporte de comidas" or tipo=="Reporte de comidas."): #TO DO
+                            #TO DO
+                            print("Reporte de comidas")
+
+                            datos_comida=await insertar_user_history(id_numero=int(sender_number[10:]))
+
+                            calorias_day=datos_comida[1]["calorias"]
+
+                            json_comidas=await identificar_comida(sender_number,incoming_msg)
+
+                            print("Hook",json_comidas)
+
+                            calorias=0
+
+                            mensaje_retornar=""""""
+
+                            alimentos_arr=[]
+
+                            for i in json_comidas:
+                                print(i)
+                                conteo_alimento=0
+                                if(i=="mayonesa"): conteo_alimento=119
+                                else: conteo_alimento=int(conteo_calorias_service(df,i,n=3))
+                                cadena="Alimento "+i.capitalize()+" Calorias "+str(conteo_alimento)
+                                print("Alimento "+i+" Calorias "+str(conteo_alimento))
+                                calorias=conteo_alimento*int(json_comidas[i])+calorias
+                                alimentos_arr.append(cadena)
+
+                            my_string = '\n'.join(alimentos_arr)
+
+                            cal_total=calorias_day+calorias
+                            #mensaje_retornar="Su consumo de calorias hasta ahora era de %d"%calorias_day +"\n" "Con lo que acaba de ingerir aumento a %d"%cal_total
+                            my_string=my_string+"\n"+"Su consumo de calorias hasta ahora era de %d"%calorias_day +"\n" "Con lo que acaba de ingerir aumento a %d"%cal_total
+
+                            mensaje_retornar=my_string
+
+                            funciones_al_finalizar.append((update_calorias,int(sender_number[10:]),int(calorias+calorias_day)))
+
+                        elif(tipo=="Cambio de objetivo"): #DONE
+                            
+                            print("Cambio de objetivo")
+
+                            mensaje_retornar="Digame cual es su objetivo porfavor"
+
+                            funciones_al_finalizar.append((update_estado,int(sender_number[10:]),"CAMBIO DE OBJETIVO"))
+
+                        elif(tipo=="Consejo nutricional"): #TO DO
+                            #Buscar las calorias de la comida a comer con Embeddings + wrapper
+                            mensaje_retornar = sugerencias(incoming_msg)
+                            print("Consejo nutricional:")
+                            print(mensaje_retornar)
+
+                        else: #TO DO
+                            #Query a OpenAI
+                            print("Otrossss")
+                            mensaje_retornar="\U0001F600"
+
+                    else:
+                        
+                        mensaje_retornar=leer_objetivo(incoming_msg,datos_usuario,sender_number,funciones_al_finalizar,objetivo)
+
                 else:
-                    
-                    nuevo_falta_info=verificar_datos_usuario(datos_usuario,dic_datos,falta_info)
 
-                    nombre=datos_usuario["nombre"]
-
-                    if(len(nuevo_falta_info)==0): mensaje_retornar=f"Genial, {nombre}, ahora dime cuales son tus objetivos alimenticios"
-                    elif(len(nuevo_falta_info)==1): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]}"
-                    elif(len(nuevo_falta_info)==2): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]} y {nuevo_falta_info[1]}"
-                    elif(len(nuevo_falta_info)==3): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]}, {nuevo_falta_info[1]} y {nuevo_falta_info[2]}"
-                    else: mensaje_retornar="Ya p no me dijiste tus datos"
+                    dic_datos=parseo_info(incoming_msg)
                     
-                    funciones_al_finalizar.append((update_usuario,int(sender_number[10:]),nombre,datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"]))
+                    if(dic_datos=={}): mensaje_retornar="Hubo un error porfavor vuelva a introducir sus datos"
+                    else:
+                        
+                        nuevo_falta_info=verificar_datos_usuario(datos_usuario,dic_datos,falta_info)
+
+                        nombre=datos_usuario["nombre"]
+
+                        if(len(nuevo_falta_info)==0): mensaje_retornar=f"Genial, {nombre}, ahora dime cuales son tus objetivos alimenticios"
+                        elif(len(nuevo_falta_info)==1): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]}"
+                        elif(len(nuevo_falta_info)==2): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]} y {nuevo_falta_info[1]}"
+                        elif(len(nuevo_falta_info)==3): mensaje_retornar=f"Porfavor indicame tu {nuevo_falta_info[0]}, {nuevo_falta_info[1]} y {nuevo_falta_info[2]}"
+                        else: mensaje_retornar="Ya p no me dijiste tus datos"
+                        
+                        funciones_al_finalizar.append((update_usuario,int(sender_number[10:]),nombre,datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"]))
+            
+        message = client.messages.create(body=mensaje_retornar,from_=numero_from,to=sender_number)
         
-    message = client.messages.create(body=mensaje_retornar,from_=numero_from,to=sender_number)
-    
-    for call in funciones_al_finalizar:
-        function, *args = call
-        await function(*args)
+        for call in funciones_al_finalizar:
+            function, *args = call
+            await function(*args)

@@ -144,10 +144,6 @@ async def update_calorias(numero_usuario,calorias):
     supabase_client.table("user_history").update(new_calorias).eq("user_id",numero_usuario).eq('dia',fecha_actual_str).execute()
 
 async def get_users_temprano_with_date(fecha):
-    #Se debe de colocar la fecha actual str y borrar el parametro de fecha de la funcion
-    fecha_actual = datetime.date.today()
-    fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
-
     response = supabase_client.table('user_history').select('user_id, temprano').eq('dia', fecha).execute()
     res = response.data
     # print(res)
@@ -155,10 +151,6 @@ async def get_users_temprano_with_date(fecha):
     return res
 
 async def get_users_tarde_with_date(fecha):
-    #Se debe de colocar la fecha actual str y borrar el parametro de fecha de la funcion
-    fecha_actual = datetime.date.today()
-    fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
-
     response = supabase_client.table('user_history').select('user_id, tarde').eq('dia', fecha).execute()
     res = response.data
     # print(res)
@@ -166,9 +158,6 @@ async def get_users_tarde_with_date(fecha):
     return res
 
 async def get_users_noche_with_date(fecha):
-    #Se debe de colocar la fecha actual str y borrar el parametro de fecha de la funcion
-    fecha_actual = datetime.date.today()
-    fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
 
     response = supabase_client.table('user_history').select('user_id, noche').eq('dia', fecha).execute()
     res = response.data

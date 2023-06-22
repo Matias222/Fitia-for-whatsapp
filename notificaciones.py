@@ -18,7 +18,10 @@ shared_obj = SharedObject()
 async def send_notification_temprano(hora):
     usuarios_mandar_notificacion = []
     url = 'http://127.0.0.1:8000/bot'
-    usuarios_temprano = await get_users_temprano_with_date('2023-06-09')
+    fecha_actual = datetime.date.today()
+    fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
+    
+    usuarios_temprano = await get_users_temprano_with_date(fecha_actual_str)
     
     for elemento in usuarios_temprano:
         if len(elemento['temprano']) == 0:
@@ -40,7 +43,10 @@ async def send_notification_temprano(hora):
 async def send_notification_tarde(hora):
     usuarios_mandar_notificacion = []
     url = 'http://127.0.0.1:8000/bot'
-    usuarios_tarde = await get_users_tarde_with_date('2023-06-09')
+    fecha_actual = datetime.date.today()
+    fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
+    
+    usuarios_tarde = await get_users_tarde_with_date(fecha_actual_str)
     
     for elemento in usuarios_tarde:
         if len(elemento['tarde']) == 0:
@@ -62,7 +68,10 @@ async def send_notification_tarde(hora):
 async def send_notification_noche(hora):
     usuarios_mandar_notificacion = []
     url = 'http://127.0.0.1:8000/bot'
-    usuarios_noche = await get_users_noche_with_date('2023-06-09')
+    fecha_actual = datetime.date.today()
+    fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
+    
+    usuarios_noche = await get_users_noche_with_date(fecha_actual_str)
     
     for elemento in usuarios_noche:
         if len(elemento['noche']) == 0:
@@ -89,7 +98,7 @@ def ejecutar_cronjob():
     schedule.every().day.at("17:00").do(asyncio.run, send_notification_tarde("17:00 PM"))
 
     # NOCHE
-    schedule.every().day.at("00:00").do(asyncio.run, send_notification_noche("00:00 PM"))
+    schedule.every().day.at("23:00").do(asyncio.run, send_notification_noche("23:00 PM"))
     
     while True:
         schedule.run_pending()
