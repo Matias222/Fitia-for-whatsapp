@@ -16,7 +16,22 @@ openai.api_key= os.getenv("OPENAI_API_KEY")
 
 
 async def my_async_function():
-    return await insertar_usuario("51927144823")
+    return await insertar_usuario("51999999999","Jorge",peso=70,talla=1.70,objetivo="bajar 10kg",objetivo_confirmado=False,edad=23)
+    #return await insertar_usuario("51927144823")
+
+def test_login_user():
+    loop = asyncio.get_event_loop()
+    user=loop.run_until_complete(my_async_function())  
+    print("===========================================")  
+    if user[0]==0:
+        print("usuario no existe,procede a registrarlo")
+        print(user)
+    elif user[0]==1:
+        print("usuario ya existe, procede a mostrar datos")
+        print(user)
+    print("===========================================")
+    loop.close()
+    pass
 
 d = gender.Detector()
 
@@ -136,5 +151,6 @@ def parseo_openai(query):
 
     return ans
 
-ans=contador_calorias("Matias",1.76,89,21,"Bajar 10 kilos")
-parseo_openai(ans)
+#ans=contador_calorias("Matias",1.76,89,21,"Bajar 10 kilos")
+#parseo_openai(ans)
+test_login_user()
