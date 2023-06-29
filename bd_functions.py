@@ -161,7 +161,7 @@ async def update_user_history(
         "tarde": tarde,
         "noche": noche,
     }
-    supabase_client.table("user_history").update(new_user).eq(
+    return supabase_client.table("user_history").update(new_user).eq(
         "user_id", id_numero
     ).execute()
 
@@ -230,21 +230,21 @@ async def recuperar_comida_noche(numero_usuario, fecha):
 
 async def update_temprano(numero_usuario, fecha, tempra=[]):
     new_temprano = {"temprano": tempra}
-    supabase_client.table("user_history").update(new_temprano).eq(
+    return supabase_client.table("user_history").update(new_temprano).eq(
         "user_id", numero_usuario
     ).eq("dia", fecha).execute()
 
 
 async def update_tarde(numero_usuario, fecha, tard=[]):
     new_tarde = {"tarde": tard}
-    supabase_client.table("user_history").update(new_tarde).eq(
+    return supabase_client.table("user_history").update(new_tarde).eq(
         "user_id", numero_usuario
     ).eq("dia", fecha).execute()
 
 
 async def update_noche(numero_usuario, fecha, noch=[]):
     new_noche = {"noche": noch}
-    supabase_client.table("user_history").update(new_noche).eq(
+    return supabase_client.table("user_history").update(new_noche).eq(
         "user_id", numero_usuario
     ).eq("dia", fecha).execute()
 
@@ -258,7 +258,7 @@ async def update_calorias(numero_usuario, calorias):
     except TypeError as e:
         print("QUE CHUCHA FUE")
 
-    supabase_client.table("user_history").update(new_calorias).eq(
+    return supabase_client.table("user_history").update(new_calorias).eq(
         "user_id", numero_usuario
     ).eq("dia", fecha_actual_str).execute()
 

@@ -94,4 +94,4 @@ async def guardar_plan_personalizado(mensaje_retornar,sender_number,datos_usuari
 
     print(parseo_dic)
 
-    await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo,True,parseo_dic["calorias"],parseo_dic["litros"])
+    return await update_usuario(int(sender_number[10:]),datos_usuario["nombre"],datos_usuario["peso"],datos_usuario["talla"],datos_usuario["edad"],objetivo,True,parseo_dic["calorias"],parseo_dic["litros"])
