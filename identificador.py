@@ -123,17 +123,13 @@ def existe_keyword(mensaje):
     return False
 
 async def insertar_o_actualizar(usuario_existe, numero_usuario, fecha, alimento, mensaje, temprano, tarde, noche):
-    print("HOLA?")
     if usuario_existe:
-        print("gaaaa")
         if temprano:
             arreglo_temprano = await recuperar_comida_temprano(numero_usuario, fecha)
             arreglo_temprano.append(alimento)
             await update_temprano(numero_usuario, fecha, arreglo_temprano)
         elif tarde:
             arreglo_tarde = await recuperar_comida_tarde(numero_usuario, fecha)
-            
-            print("HERE")
             print(arreglo_tarde)
             arreglo_tarde.append(alimento)
             await update_tarde(numero_usuario, fecha, arreglo_tarde)
@@ -153,7 +149,6 @@ async def insertar_o_actualizar(usuario_existe, numero_usuario, fecha, alimento,
         elif noche:
             arr_noche.append(alimento)
         await insertar_user_history(id_numero=numero_usuario, calorias=0.0, litros=0.0, chat=mensaje, temprano=arr_temprano, tarde=arr_tarde, noche=arr_noche)
-        print("UPDATE")
         return "Insertado"
 
 async def identificar_comida(sender_number,message):
