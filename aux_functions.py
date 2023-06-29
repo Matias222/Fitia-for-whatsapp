@@ -40,6 +40,7 @@ def audio_2_text(audio_file):
 
     return transcription
 
+
 def identificar_confirmacion(query):
     
     query=query.lower()
@@ -57,12 +58,12 @@ def identificar_confirmacion(query):
 
     return "NN"
 
+
 def verificar_datos_bd(datos_usuario,datos_nuevo):
 
     falta_info=[]
 
-    for categoria in datos_usuario:
-        
+    for categoria in datos_usuario:        
         val=datos_nuevo[categoria]
         if(val=="" or val==0): falta_info.append(categoria)
         else: datos_usuario[categoria]=val
@@ -70,6 +71,7 @@ def verificar_datos_bd(datos_usuario,datos_nuevo):
     print(datos_usuario,datos_nuevo)
 
     return falta_info
+
 
 def verificar_datos_usuario(datos_usuario,datos_nuevo,antigua):
 
