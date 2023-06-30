@@ -2,7 +2,8 @@ from fastapi import FastAPI, Request
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from dotenv import load_dotenv
-from datetime import datetime
+#from datetime import datetime
+import datetime
 from openai.embeddings_utils import get_embedding, cosine_similarity
 
 from bd_functions import insertar_usuario,update_usuario, update_estado, insertar_user_history, update_calorias
@@ -259,3 +260,124 @@ async def webhook(request: Request):
         for call in funciones_al_finalizar:
             function, *args = call
             await function(*args)
+
+#apis testeadas
+
+@app.post("/insert-user")
+async def insert_user():
+    try:
+        numero_aleatorio = random.randint(900000000, 999999999)
+        nombres = ["Juan", "María", "Pedrito", "Ana", "Luis", "Carla"]
+        await insertar_usuario("51" + str(numero_aleatorio), random.choice(nombres),
+                         peso=random.randint(30, 120), talla=round(random.uniform(0.5, 2.5), 2),
+                         objetivo="", objetivo_confirmado=random.choice([True, False]),
+                         edad=random.randint(10, 100))
+        
+        # En caso de éxito, enviar una respuesta con un mensaje de éxito
+        return {"message": "Usuario insertado correctamente"}
+    
+    except Exception as e:
+        # En caso de error, enviar una respuesta con un mensaje de error
+        return Response(content="Error al insertar el usuario", status_code=500)
+    
+@app.post("/update-user")
+async def update_user():
+    try:        
+        numeros_prueba=["51951257655"," 51973633360","51951733905"]
+        numero_aleatorio = random.randint(0, len(numeros_prueba))
+        await update_usuario(numero_aleatorio, "Modificado",
+                         peso=40, talla=2.1,
+                         objetivo="Bajar de peso", objetivo_confirmado=True,
+                         edad=18)
+        
+        # En caso de éxito, enviar una respuesta con un mensaje de éxito
+        return {"message": "Usuario Modificado correctamente"}
+    
+    except Exception as e:
+        # En caso de error, enviar una respuesta con un mensaje de error
+        return Response(content="Error al Modificar el usuario", status_code=500)    
+    
+@app.post("/calculate-calories")
+async def calculate_calories():
+    try:
+        new_cal = random.randint(0,500)
+        numero="51926883329"
+        await update_calorias(numero,new_cal)
+        
+        # En caso de éxito, enviar una respuesta con un mensaje de éxito
+        return {"message": "Calorias actualizadas"}
+    
+    except Exception as e:
+        # En caso de error, enviar una respuesta con un mensaje de error
+        return Response(content="Las calorias no fueron actualizadas", status_code=500)
+
+
+@app.post("/recovery-morning")
+async def recovery_morning():
+    try:
+        numero="51927144823"
+        await recuperar_comida_temprano(numero,datetime.datetime.now())    
+        return {"message": "Desayuno guardado"}
+    
+    except Exception as e:
+        # En caso de error, enviar una respuesta con un mensaje de error
+        return Response(content="No se pudo obtener el desayuno", status_code=500)
+
+@app.post("/recovery-afternon")
+async def recovery_afternon():
+    try:
+        numero="51999999999"
+        await recuperar_comida_tarde(numero,datetime.datetime.now())    
+        return {"message": "Almuerzo guardado"}
+    
+    except Exception as e:
+        # En caso de error, enviar una respuesta con un mensaje de error
+        return Response(content="No se pudo obtener el Almuerzo", status_code=500)
+
+@app.post("/recovery-night")
+async def recovery_night():
+    try:
+        numero="51999999999"
+        await recuperar_comida_noche(numero,datetime.datetime.now())    
+        return {"message": "Cena guardado"}
+    
+    except Exception as e:
+        # En caso de error, enviar una respuesta con un mensaje de error
+        return Response(content="No se pudo obtener el Cena", status_code=500)
+    
+
+@app.post("/verified-dates")
+async def recovery_night():
+    try:
+        datos_user1 = {"nombre": "", "talla": 0, "peso": 0, "edad": 0}
+        datos_user_nuevo = {"nombre": "", "talla": 1.77, "peso": 70, "edad": 23}
+        verificar_datos_bd(
+            datos_usuario=datos_user1, datos_nuevo=datos_user_nuevo
+        )
+    
+        return {"message": "Datos verificados correctamente"}
+    
+    except Exception as e:
+        # En caso de error, enviar una respuesta con un mensaje de error
+        return Response(content="Los datos no concuerdan", status_code=500)
+    
+
+@app.post("/insert-user-history")
+async def insert_user_history():
+    try:
+        insertar_user_history(
+            "51999999999",
+            1372,
+            0.0,
+            "",
+            [{"cereal": 1, "vaso de yogurt": 1}],
+            [{"Lomo saltado": 1, "Coca Cola": 1}],
+            [],
+        )
+        
+    
+        return {"message": "Datos insertados correctamente"}
+    
+    except Exception as e:
+        # En caso de error, enviar una respuesta con un mensaje de error
+        return Response(content="Los datos no fueron insertados", status_code=500)
