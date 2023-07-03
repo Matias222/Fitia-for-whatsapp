@@ -29,7 +29,7 @@ jobs:
 
     - name: Check test results
       run: |
-       if [[ ${{ job.status }} != 'success' ]]; then
+        if ${{ failure() }}; then
           echo "Tests failed. Aborting push."
           exit 1
         fi
