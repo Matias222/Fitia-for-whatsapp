@@ -554,6 +554,7 @@ def test_failed_segmentar_cantidades_comida():
     assert response == "{}"
 
 
+
 def test_identificar_comida():
     time.sleep(25)
     response = asyncio.run(
