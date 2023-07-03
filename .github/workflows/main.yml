@@ -27,10 +27,13 @@ jobs:
     - name: Run tests
       run: pytest
 
-    - name: Check test results
-      run: |
-        if ${{ failure() }}; then
-          echo "Tests failed. Aborting push."
-          exit 1
-        fi
+    - name: Check test status
+        run: |
+          pytest --exitfirst
+          test_status=$?
+
+          if [ $test_status -ne 0 ]; then
+            echo "Los tests de FastAPI no se ejecutaron correctamente. No se permite hacer push."
+            exit 1
+          fi
 
