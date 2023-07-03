@@ -98,7 +98,7 @@ def ejecutar_cronjob():
     schedule.every().day.at("17:00").do(asyncio.run, send_notification_tarde("17:00 PM"))
 
     # NOCHE
-    schedule.every().day.at("23:00").do(asyncio.run, send_notification_noche("23:00 PM"))
+    schedule.every().day.at("20:31").do(asyncio.run, send_notification_noche("23:00 PM"))
     
     while True:
         schedule.run_pending()

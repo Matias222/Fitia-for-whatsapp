@@ -20,7 +20,9 @@ import asyncio
 
 
 def recuperar_alimento_texto(query): #servicio deprecado
-    prompt="""Tu unica funcion es dado el input del usuario, devolver un JSON con una caracteristica, la comida o alimento que indica la persona.
+    prompt="""Tu unica funcion es dado el input del usuario, 
+    devolver un JSON con una caracteristica, la comida o alimento 
+    que indica la persona.
     Usuario: Hoy he comido arroz con pollo con papa a la huancaina.
     AI: {"Alimento": "arroz con pollo con papa a la huancaina"}
 
