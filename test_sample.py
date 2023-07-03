@@ -172,28 +172,18 @@ async def my_async_identificar_comida(sender_number, message):
 
 
 def test_login_user():
-    # loop = asyncio.get_event_loop()
     user = asyncio.run(my_async_function())
-    # print("===========================================")
     if user[0] == 0:
-        # print("usuario no existe,procede a registrarlo")
-        # print(user)
         assert len(user) != 0
         assert user[1] != {}
     elif user[0] == 1:
-        # print("usuario ya existe, procede a mostrar datos")
-        # print(user)
         assert len(user) != 0
         assert user[1] != {}
-    # print("===========================================")
-    # loop.close()
 
 
 def test_update_usuario():
     user, count = asyncio.run(my_async_function_2())
     if user[1] != []:
-        # print("Usuario actualizado exitosamente")
-        # print(user[1])
         assert len(user) != 0
         assert user[1] != {}
 
@@ -201,8 +191,6 @@ def test_update_usuario():
 def test_failed_update_usuario():
     user, count = asyncio.run(my_async_function_2_failed())
     if user[1] == []:
-        # print("usuario no encontrado")
-        # print(user[1])
         assert user[1] == {}
         assert len(user[1]) == 0
 
@@ -398,7 +386,6 @@ def test_get_users_tarde_with_date():
 
 
 def test_failed_get_users_tarde_with_date():
-    print("====== TEST FAILED GET USERS TARDE ======")
     response = asyncio.run(
         my_async_get_users_tarde_with_date(
             datetime.datetime(month=6, day=30, year=2024)
@@ -409,14 +396,12 @@ def test_failed_get_users_tarde_with_date():
 
 
 def test_get_users_noche_with_date():
-    print("====== TEST GET USERS NOCHE ======")
     response = asyncio.run(my_async_get_users_noche_with_date(datetime.datetime.now()))
     assert response != []
     assert len(response) > 0
 
 
 def test_failed_get_users_noche_with_date():
-    print("====== TEST FAILED GET USERS NOCHE ======")
     response = asyncio.run(
         my_async_get_users_noche_with_date(
             datetime.datetime(month=6, day=30, year=2024)
@@ -498,7 +483,6 @@ def test_plan_personalizado():
     time.sleep(5)
 
 def test_parseo_info():
-    print("===== TEST PARSEO DE INFORMACION =====")
     response = parseo_info("Mi nomre es Pedro, tengo 25 años, mido 1.77 y peso 73 kg")
     assert response != {}
     assert len(response) > 0
@@ -583,51 +567,3 @@ def test_failed_identificar_comida():
     response = asyncio.run(my_async_identificar_comida("000000000051999999999", ""))
     assert response == {}
     assert len(response) == 0
-
-
-"""test_login_user()
-test_update_usuario()
-test_failed_update_usuario()
-test_update_estado()
-test_failed_update_estado()
-test_existe_usuario()
-test_failed_existe_usuario()
-test_insertar_user_history()
-test_update_user_history()
-test_existe_user_history_en_fecha()
-test_failed_existe_user_history_en_fecha()
-test_recuperar_comida_temprano()
-test_failed_recuperar_comida_temprano()
-test_recuperar_comida_tarde()
-test_failed_recuperar_comida_tarde()
-test_recuperar_comida_noche()
-test_failed_recuperar_comida_noche()
-test_update_temprano()
-test_update_tarde()
-test_update_noche()
-test_update_calorias()
-test_get_users_temprano_with_date()
-test_failed_get_users_temprano_with_date()
-test_get_users_tarde_with_date()
-test_failed_get_users_tarde_with_date()
-test_get_users_noche_with_date()
-test_failed_get_users_noche_with_date()
-test_identificar_confirmacion()
-test_failed_identificar_confimacion()
-test_verificar_datos_bd()
-test_failed_verificar_datos_bd()
-test_guardar_plan_personalizado()
-test_plan_personalizado()
-test_failed_plan_personalizado()
-test_parseo_info()
-test_failed_parseo_info()
-test_parseo_calorias()
-test_failed_parseo_calorias()
-test_segmentador()
-test_sugerencias()
-test_recuperar_alimento_texto()
-test_failed_recuperar_alimento_texto()
-test_segmentar_cantidades_comida()
-test_failed_segmentar_cantidades_comida()
-test_identificar_comida()
-test_failed_identificar_comida()"""
