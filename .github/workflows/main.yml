@@ -29,11 +29,7 @@ jobs:
 
     - name: Check test status
         run: |
-          pytest --exitfirst
-          test_status=$?
-
-          if [ $test_status -ne 0 ]; then
-            echo "Los tests de FastAPI no se ejecutaron correctamente. No se permite hacer push."
+          if [[ ${{ steps.build.outcome }} == 'failure' ]]; then
+            echo "Los tests han fallado. No se permite el push."
             exit 1
           fi
-
