@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - name: Checkout code
@@ -20,4 +20,14 @@ jobs:
 
     - name: Run pytest
       run: pytest
+
+    - name: Check test results
+      run: |
+        $ErrorActionPreference = 'Stop'
+        if ($LASTEXITCODE -eq 0) {
+          Write-Host "Tests passed successfully"
+        } else {
+          Write-Host "Tests failed"
+          exit $LASTEXITCODE
+        }
 
