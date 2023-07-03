@@ -519,6 +519,7 @@ def test_segmentador():
     time.sleep(5)
 
 def test_sugerencias():
+    time.sleep(5)
     response = sugerencias("Se me antojo tomarme una gaseosa, ¿Deberia tomarla?")
     print("resposne", response)
     assert type(response) == str
@@ -526,12 +527,13 @@ def test_sugerencias():
     time.sleep(5)
 
 def test_recuperar_alimento_texto():
+    time.sleep(5)
     response = recuperar_alimento_texto(
         "Hoy he comido arroz con pollo con papa a la huancaina."
     )
     assert response != {}
     assert len(response) > 0
-    time.sleep(5)
+   
 
 def test_failed_recuperar_alimento_texto():
     response = recuperar_alimento_texto("")
@@ -553,7 +555,7 @@ def test_failed_segmentar_cantidades_comida():
 
 
 def test_identificar_comida():
-    time.sleep(20)
+    time.sleep(25)
     response = asyncio.run(
         my_async_identificar_comida("000000000051999999999", "Cene arroz con leche")
     )
@@ -563,7 +565,7 @@ def test_identificar_comida():
 
 
 def test_failed_identificar_comida():
-    time.sleep(20)
+    time.sleep(25)
     response = asyncio.run(my_async_identificar_comida("000000000051999999999", ""))
     assert response == {}
     assert len(response) == 0
