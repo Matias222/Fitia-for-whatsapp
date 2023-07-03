@@ -13,23 +13,23 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
 
-    - name: Install dependencies
-      run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-    - name: Run tests
-      run: pytest
+      - name: Run tests
+        run: pytest
 
-    - name: Check test status
+      - name: Check test status
         run: |
-          if [[ ${{ steps.build.outcome }} == 'failure' ]]; then
+          if [[ ${{ job.status }} == 'failure' ]]; then
             echo "Los tests han fallado. No se permite el push."
             exit 1
           fi
