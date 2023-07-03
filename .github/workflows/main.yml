@@ -29,7 +29,7 @@ jobs:
 
       - name: Check test status
         run: |
-          if [[ ${{ job.status }} == 'failure' ]]; then
+          if [ ${{ job.status }} == 'failure' ]; then
             echo "Los tests han fallado. No se permite el push."
             exit 1
           fi
