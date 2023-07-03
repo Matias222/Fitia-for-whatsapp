@@ -26,3 +26,10 @@ jobs:
 
     - name: Run tests
       run: pytest
+
+    - name: Check test results
+      run: |
+        if [ $? -ne 0 ]; then
+          echo "Tests failed. Aborting push."
+          exit 1
+        fi
