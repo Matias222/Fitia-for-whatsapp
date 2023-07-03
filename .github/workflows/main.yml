@@ -25,10 +25,4 @@ jobs:
         run: pip install pytest openai dotenv asyncio supabase
 
       - name: Run pytest
-      	run: |
-         pytest
-         exitcode=$?
-         if [ $exitcode -ne 0 ]; then
-          echo "Tests failed. Aborting push."
-          exit $exitcode
-         fi
+      	run: pytest
