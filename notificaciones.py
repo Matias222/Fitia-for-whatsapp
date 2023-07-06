@@ -1,4 +1,4 @@
-from bd_functions import get_users_noche_with_date, get_users_temprano_with_date, get_users_tarde_with_date
+from bd_functions import get_users_noche_with_date, get_users_temprano_with_date, get_users_tarde_with_date, get_users_historial, insertar_usuario
 import schedule
 import datetime
 import asyncio
@@ -89,6 +89,78 @@ async def send_notification_noche(hora):
         }
         response = requests.post(url, data=result)
         
+async def daily_report():
+    
+    url = 'https://e23f-204-199-168-25.ngrok-free.app/bot' #CAMBIAR PARA PRUEBAS
+    
+    fecha_actual = datetime.date.today()
+    fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
+    
+    usuarios_global = await get_users_historial(fecha_actual_str)
+    arr_retornar=[]
+    
+    numeros=[]
+
+    for elemento in usuarios_global:
+
+        usuario_especifico=await insertar_usuario(elemento["user_id"])
+
+        print(usuario_especifico[1])
+
+        limite_calorias=usuario_especifico[1]["calorias_dia"]
+
+        numeros.append(elemento["user_id"])
+        calorias=elemento["calorias"]
+
+        desayuno="No reporto"
+        almuerzo="No reporto"
+        cena="No reporto"
+
+        for i in range(len(elemento["temprano"])):
+            if(i==0): desayuno=""
+            desayuno=desayuno+str(elemento["temprano"][i])+" "
+
+        for i in range(len(elemento["tarde"])):
+            if(i==0): almuerzo=""
+            almuerzo=almuerzo+str(elemento["tarde"][i])+" "
+        
+        for i in range(len(elemento["noche"])):
+            if(i==0): cena=""
+            cena=cena+str(elemento["noche"][i])+" "
+        
+        #print(desayuno)
+        #print(almuerzo)
+        #print(cena)
+
+        limite_calorias_numero=2800
+
+        try:
+            limite_calorias_numero=float(limite_calorias)
+        except:
+            temp_numero=""
+            for i in limite_calorias:
+                if(i=="-"): break
+                temp_numero=temp_numero+i
+            limite_calorias_numero=float(temp_numero)
+
+        if(limite_calorias_numero<calorias):
+            mensaje=f"Tu limite diario de calorias es de {limite_calorias}, hoy consumiste {calorias}, por lo que no lograste tu objetivo alimenticio 😞.\n Temprano -> {desayuno} \n Tarde -> {almuerzo}\n Cena -> {cena}"
+        else:
+            mensaje=f"Tu limite diario de calorias es de {limite_calorias}, hoy consumiste {calorias}, por lo que lograste tu objetivo alimenticio 😊.\n Temprano -> {desayuno} \n Tarde -> {almuerzo} \n Cena -> {cena}"
+        
+
+        arr_retornar.append(mensaje)
+
+    #shared_obj.actualizar_variable([usuarios_mandar_notificacion, f'Hey, son las {hora} y te olvidaste de reportar tu comida de la noche'])
+    result = {
+        "From" : 'SECRETO_REPORTE',
+        "Mensaje" : arr_retornar,
+        "Numeros" : numeros,
+        "Body": ""
+    }
+    print(arr_retornar,numeros)
+    response = requests.post(url, data=result)
+    
 
 def ejecutar_cronjob():
     # TEMPRANO
@@ -98,12 +170,24 @@ def ejecutar_cronjob():
     schedule.every().day.at("17:00").do(asyncio.run, send_notification_tarde("17:00 PM"))
 
     # NOCHE
-    schedule.every().day.at("23:00").do(asyncio.run, send_notification_noche("23:00 PM"))
+    schedule.every().day.at("16:14").do(asyncio.run, send_notification_noche("23:00 PM"))
     
+    # REPORTE
+    schedule.every().day.at("23:59").do(asyncio.run, daily_report())
+
+
     while True:
         schedule.run_pending()
         time.sleep(1)
 
-cronjob_thread = threading.Thread(target=ejecutar_cronjob)
+def cronjob_test():
 
-cronjob_thread.start()
+    cronjob_thread = threading.Thread(target=ejecutar_cronjob)
+
+    cronjob_thread.start()
+
+def example_test():
+    #asyncio.run(send_notification_noche("11:00 PM"))
+    asyncio.run(daily_report())
+
+example_test()

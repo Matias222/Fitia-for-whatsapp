@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from dotenv import load_dotenv
@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import datetime
 from openai.embeddings_utils import get_embedding, cosine_similarity
 
-from bd_functions import insertar_usuario,update_usuario, update_estado, insertar_user_history, update_calorias
+from bd_functions import insertar_usuario,update_usuario, update_estado, insertar_user_history, update_calorias, recuperar_comida_noche, recuperar_comida_tarde, recuperar_comida_temprano
 from aux_functions import audio_2_text, identificar_confirmacion, verificar_datos_bd, verificar_datos_usuario, guardar_plan_personalizado
 from openai_calls import plan_personalizado, parseo_info, segmentador, sugerencias
 from identificador import identificar_comida
@@ -116,6 +116,14 @@ async def webhook(request: Request):
         for numero in numeros:
             numero_enviar = 'whatsapp:+' + numero
             message = client.messages.create(body=mensaje_retornar,from_=numero_from,to=numero_enviar)
+    
+    elif sender_number == 'SECRETO_REPORTE':
+        mensajes_temp=message_body.getlist("Mensaje")
+        numeros = message_body.getlist('Numeros')
+        print(numeros,mensajes_temp)
+        for i in range(len(numeros)):
+            client.messages.create(body=mensajes_temp[i],from_=numero_from,to='whatsapp:+'+numeros[i])
+
     else:
         if 'MediaContentType0' in message_body:
 
@@ -198,7 +206,7 @@ async def webhook(request: Request):
                                 conteo_alimento=0
                                 if(i=="mayonesa"): conteo_alimento=119
                                 else: conteo_alimento=int(conteo_calorias_service(df,i,n=3))
-                                cadena="Alimento "+i.capitalize()+" Calorias "+str(conteo_alimento)
+                                cadena=i.capitalize()+" -> Calorias "+str(conteo_alimento)
                                 print("Alimento "+i+" Calorias "+str(conteo_alimento))
                                 calorias=conteo_alimento*int(json_comidas[i])+calorias
                                 alimentos_arr.append(cadena)

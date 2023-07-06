@@ -263,6 +263,19 @@ async def update_calorias(numero_usuario, calorias):
     ).eq("dia", fecha_actual_str).execute()
 
 
+
+async def get_users_historial(fecha):
+    response = (
+        supabase_client.table("user_history")
+        .select("*")
+        .eq("dia", fecha)
+        .execute()
+    )
+    res = response.data
+    # print(res)
+
+    return res
+
 async def get_users_temprano_with_date(fecha):
     response = (
         supabase_client.table("user_history")
