@@ -8,6 +8,7 @@ import os
 from dotenv import load_dotenv
 import asyncio
 import datetime
+import time
 
 from openai_calls import (
     plan_personalizado,
@@ -48,7 +49,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 async def my_async_function():
     return await insertar_usuario(
-        "51999999999",
+        "51",
         "Jorge",
         peso=70,
         talla=1.70,
@@ -171,31 +172,27 @@ async def my_async_identificar_comida(sender_number, message):
 
 
 def test_login_user():
-    # loop = asyncio.get_event_loop()
     user = asyncio.run(my_async_function())
-    print("===========================================")
     if user[0] == 0:
-        print("usuario no existe,procede a registrarlo")
-        print(user)
+        assert len(user) != 0
+        assert user[1] != {}
     elif user[0] == 1:
-        print("usuario ya existe, procede a mostrar datos")
-        print(user)
-    print("===========================================")
-    # loop.close()
+        assert len(user) != 0
+        assert user[1] != {}
 
 
 def test_update_usuario():
     user, count = asyncio.run(my_async_function_2())
     if user[1] != []:
-        print("Usuario actualizado exitosamente")
-        print(user[1])
+        assert len(user) != 0
+        assert user[1] != {}
 
 
 def test_failed_update_usuario():
     user, count = asyncio.run(my_async_function_2_failed())
     if user[1] == []:
-        print("usuario no encontrado")
-        print(user[1])
+        assert user[1] == {}
+        assert len(user[1]) == 0
 
 
 def test_update_estado():
@@ -203,44 +200,28 @@ def test_update_estado():
         my_sync_update_estado("51999999999", "CAMBIO DE OBJETIVO")
     )
     if user[1] != []:
-        print("cambio estado")
-        print(user[1])
-    else:
-        print("usuario no encontrado")
+        assert user[1] != {}
+        assert len(user[1]) > 0
 
 
 def test_failed_update_estado():
-    print("test failed cambio de estado")
-    user, count = asyncio.run(my_sync_update_estado("519", "CAMBIO DE OBJETIVO"))
-    if user[1] != []:
-        print("cambio estado")
-        print(user[1])
-    else:
-        print("usuario no encontrado")
+    user, _ = asyncio.run(my_sync_update_estado("519", "CAMBIO DE OBJETIVO"))
+    assert user[1] == []
+    assert len(user[1]) == 0
 
 
 def test_existe_usuario():
-    print("test existe usuario")
     response = asyncio.run(my_async_existe_usuario("51999999999"))
-    if response:
-        print("Usuario existe")
-    else:
-        print("Usuario no existe")
+    assert response == True
 
 
 def test_failed_existe_usuario():
     print("test failed existe usuario")
     response = asyncio.run(my_async_existe_usuario("519"))
-    if response:
-        print("Usuario existe")
-    else:
-        print("Usuario no existe")
+    assert response == False
 
 
 def test_insertar_user_history():
-    print("==============================")
-    print("= TEST INSERTAR USER HISTORY =")
-    print("==============================")
     response = asyncio.run(
         my_async_insertar_user_history(
             "51999999999",
@@ -252,10 +233,8 @@ def test_insertar_user_history():
             [],
         )
     )
-    if response[1] != {}:
-        print(response)
-    print("==============================")
-    print("==============================")
+    assert response[1] != {}
+    assert len(response[1]) > 0
 
 
 def test_update_user_history():
@@ -270,45 +249,34 @@ def test_update_user_history():
             [{"Arroz con leche": 2}],
         )
     )
-    if response[1] != []:
-        print(response[1])
+    assert response[1] != []
+    assert len(response[1]) > 0
+    assert str(response[1][0]["user_id"]) == "51999999999"
 
 
 def test_existe_user_history_en_fecha():
-    print("==============================")
-    print("= TEST EXISTE USER HISTORY EN FECHA =")
-    print("==============================")
     response = asyncio.run(
         my_async_existe_user_history_en_fecha("51999999999", datetime.datetime.now())
     )
-    if response:
-        print("si existe user history")
-    else:
-        print("no existe user history")
+    assert response == True
 
 
 def test_failed_existe_user_history_en_fecha():
-    print("==============================")
-    print("= TEST FAILED EXISTE USER HISTORY EN FECHA =")
-    print("==============================")
     datetime.datetime(month=6, day=30, year=2024)
     response = asyncio.run(
         my_async_existe_user_history_en_fecha(
             "51999999999", datetime.datetime(month=6, day=30, year=2024)
         )
     )
-    if response:
-        print("si existe user history")
-    else:
-        print("no existe user history")
+    assert response == False
 
 
 def test_recuperar_comida_temprano():
     response = asyncio.run(
         my_async_recuperar_comida_temprano("51999999999", datetime.datetime.now())
     )
-    if response != {}:
-        print(response)
+    assert response != {}
+    assert len(response) > 0
 
 
 def test_failed_recuperar_comida_temprano():
@@ -317,16 +285,16 @@ def test_failed_recuperar_comida_temprano():
             "51999999999", datetime.datetime(month=6, day=30, year=2024)
         )
     )
-    if response != {}:
-        print("no se ha encontrado comida temprano")
+    assert response == {}
+    assert len(response) == 0
 
 
 def test_recuperar_comida_tarde():
     response = asyncio.run(
         my_async_recuperar_comida_tarde("51999999999", datetime.datetime.now())
     )
-    if response != {}:
-        print(response)
+    assert response != {}
+    assert len(response) > 0
 
 
 def test_failed_recuperar_comida_tarde():
@@ -335,16 +303,16 @@ def test_failed_recuperar_comida_tarde():
             "51999999999", datetime.datetime(month=6, day=30, year=2024)
         )
     )
-    if response != {}:
-        print("no se ha encontrado comida tarde")
+    assert response == {}
+    assert len(response) == 0
 
 
 def test_recuperar_comida_noche():
     response = asyncio.run(
         my_async_recuperar_comida_noche("51999999999", datetime.datetime.now())
     )
-    if response != {}:
-        print(response)
+    assert response != {}
+    assert len(response) > 0
 
 
 def test_failed_recuperar_comida_noche():
@@ -353,117 +321,107 @@ def test_failed_recuperar_comida_noche():
             "51999999999", datetime.datetime(month=6, day=30, year=2024)
         )
     )
-    if response == {}:
-        print("no se ha encontrado comida noche")
+    assert response == {}
+    assert len(response) == 0
 
 
 def test_update_temprano():
-    print("====== TEST UPDATE TEMPRANO ======")
     response, _ = asyncio.run(
         my_async_update_temprano("51999999999", datetime.datetime.now(), [])
     )
-    if response[1] != []:
-        print("lista comida temprano actualizada")
-        print(response[1])
+    assert response[1] != []
+    assert len(response[1]) > 0
+    assert str(response[1][0]["user_id"]) == "51999999999"
 
 
 def test_update_tarde():
-    print("====== TEST UPDATE TARDE ======")
     response, _ = asyncio.run(
         my_async_update_tarde("51999999999", datetime.datetime.now(), [])
     )
-    if response[1] != []:
-        print("lista comida tarde actualizada")
-        print(response[1])
+    assert response[1] != []
+    assert len(response[1]) > 0
+    assert str(response[1][0]["user_id"]) == "51999999999"
 
 
 def test_update_noche():
-    print("====== TEST UPDATE NOCHE ======")
     response, _ = asyncio.run(
         my_async_update_noche("51999999999", datetime.datetime.now(), [])
     )
-    if response[1] != []:
-        print("lista comida noche actualizada")
-        print(response[1])
+    assert response[1] != []
+    assert len(response[1]) > 0
+    assert str(response[1][0]["user_id"]) == "51999999999"
 
 
 def test_update_calorias():
-    print("====== TEST UPDATE CALORIAS ======")
     response, _ = asyncio.run(my_async_update_calorias("51999999999", 1675.5))
-    if response[1] != []:
-        print(response[1])
+    assert response[1] != []
+    assert len(response[1]) > 0
+    assert str(response[1][0]["user_id"]) == "51999999999"
 
 
 def test_get_users_temprano_with_date():
-    print("====== TEST GET USERS TEMPRANO ======")
     response = asyncio.run(
         my_async_get_users_temprano_with_date(datetime.datetime.now())
     )
-    if response != []:
-        print(response)
+    assert response != []
+    assert len(response) > 0
+    assert str(response[0]["user_id"]) == "51999999999"
 
 
 def test_failed_get_users_temprano_with_date():
-    print("====== TEST FAILED GET USERS TEMPRANO ======")
     response = asyncio.run(
         my_async_get_users_temprano_with_date(
             datetime.datetime(month=6, day=30, year=2024)
         )
     )
-    if response == []:
-        print("No se encontro ningun usuario")
+    assert response == []
+    assert len(response) == 0
 
 
 def test_get_users_tarde_with_date():
-    print("====== TEST GET USERS TARDE ======")
     response = asyncio.run(my_async_get_users_tarde_with_date(datetime.datetime.now()))
-    if response != []:
-        print(response)
+    assert response != []
+    assert len(response) > 0
+    assert str(response[0]["user_id"]) == "51999999999"
 
 
 def test_failed_get_users_tarde_with_date():
-    print("====== TEST FAILED GET USERS TARDE ======")
     response = asyncio.run(
         my_async_get_users_tarde_with_date(
             datetime.datetime(month=6, day=30, year=2024)
         )
     )
-    if response == []:
-        print("No se encontro ningun usuario")
+    assert response == []
+    assert len(response) == 0
 
 
 def test_get_users_noche_with_date():
-    print("====== TEST GET USERS NOCHE ======")
     response = asyncio.run(my_async_get_users_noche_with_date(datetime.datetime.now()))
-    if response != []:
-        print(response)
+    assert response != []
+    assert len(response) > 0
 
 
 def test_failed_get_users_noche_with_date():
-    print("====== TEST FAILED GET USERS NOCHE ======")
     response = asyncio.run(
         my_async_get_users_noche_with_date(
             datetime.datetime(month=6, day=30, year=2024)
         )
     )
-    if response == []:
-        print("No se encontro ningun usuario")
+    assert response == []
+    assert len(response) == 0
 
 
 def test_identificar_confirmacion():
     response = identificar_confirmacion("aja")
-    if (response == "SI") or (response == "NO"):
-        print(response)
-    else:
-        print("test fallido")
+    assert response != ""
+    assert response == "SI"
+
 
 
 def test_failed_identificar_confimacion():
     response = identificar_confirmacion("")
-    if (response == "SI") or (response == "NO"):
-        print(response)
-    else:
-        print("test fallido")
+    assert response != "SI"
+    assert response != "NO"
 
 
 def test_verificar_datos_bd():
@@ -472,10 +430,8 @@ def test_verificar_datos_bd():
     response = verificar_datos_bd(
         datos_usuario=datos_user1, datos_nuevo=datos_user_nuevo
     )
-    if response != []:
-        print("datos vacios")
-    else:
-        print("datos ingresados correctamente")
+    assert response == []
+    assert len(response) == 0
 
 
 def test_failed_verificar_datos_bd():
@@ -484,10 +440,8 @@ def test_failed_verificar_datos_bd():
     response = verificar_datos_bd(
         datos_usuario=datos_user1, datos_nuevo=datos_user_nuevo
     )
-    if response != []:
-        print("falta algun dato")
-    else:
-        print("datos ingresados correctamente")
+    assert response != []
+    assert len(response) > 0
 
 
 def test_guardar_plan_personalizado():
@@ -504,172 +458,115 @@ def test_guardar_plan_personalizado():
             "Bajar 10 kg",
         )
     )
-    print(response)
-
-
+    assert response[1] != {}
+    assert len(response[1]) > 0
+    assert response[1] == [{
+        "numero": 51999999999,
+        "nombre": "Pedro",
+        "peso": 70,
+        "talla": 1.72,
+        "objetivo": "Bajar 10 kg",
+        "objetivo_confirmado": True,
+        "calorias_dia": "2000",
+        "litros_dia": 2,
+        "edad": 23,
+        "estado": "CAMBIO DE OBJETIVO",
+    }]
+    time.sleep(5)
 def test_plan_personalizado():
-    print("===== TEST PLAN PERSONALIZADO =====")
     response = asyncio.run(
         my_async_plan_personalizado("Pedro", 1.77, 73, 25, "bajar 10 kg")
     )
-    if len(response) > 0:
-        print("plan personalizado generado")
-
-
-def test_failed_plan_personalizado():
-    print("===== TEST PLAN PERSONALIZADO =====")
-    response = asyncio.run(my_async_plan_personalizado("Pedro", 1.77, 73, 25, ""))
-    indice = str(response).find("necesito")
-    if indice == -1:
-        print("plan personalizado generado")
-    else:
-        print("plan personalizado no generado")
-
+    assert type(response) == str
+    assert response != ""
+    assert len(response) > 0
+    time.sleep(5)
 
 def test_parseo_info():
-    print("===== TEST PARSEO DE INFORMACION =====")
     response = parseo_info("Mi nomre es Pedro, tengo 25 años, mido 1.77 y peso 73 kg")
-    if response != {}:
-        print("parseo de los datos exitoso")
-        print(response)
+    assert response != {}
+    assert len(response) > 0
+    assert response == {"nombre": "Pedro", "talla": 1.77, "peso": 73, "edad": 25}
 
 
 def test_failed_parseo_info():
-    print("===== TEST FAILED PARSEO DE INFORMACION =====")
+    time.sleep(5)
     response = parseo_info("")
-    if response == {}:
-        print("no se ingresaron los datos")
+    assert response == {}
+    assert len(response) == 0
 
 
 def test_parseo_calorias():
-    print("===== TEST PARSEO DE CALORIAS =====")
     response = parseo_calorias(
         "Basándome en los datos que me proporcionaste, para lograr tu objetivo de bajar 10 kilos, deberías consumir alrededor de 2000 calorías al día y tomar al menos 2 litros de agua diariamente. Es importante que tengas en cuenta que estos valores son aproximados y que pueden variar dependiendo de tu nivel de actividad física y otros factores individuales. Además, es recomendable que consultes con un nutricionista para que te brinde una dieta personalizada y adecuada a tus necesidades."
     )
-    if response != {}:
-        print("parseo de calorias exitoso")
-
+    assert response != {}
+    assert len(response) > 0
+    time.sleep(5)
 
 def test_failed_parseo_calorias():
-    print("===== TEST PARSEO DE CALORIAS =====")
+    time.sleep(5)
     response = parseo_calorias("")
-    if response == {}:
-        print("parseo de calorias fallido")
+    assert response == {}
+    assert len(response) == 0
 
 
 def test_segmentador():
-    print("===== TEST SEGMENTADOR =====")
     response = segmentador("Almorce 1/4 de pollo a la brasa con full papas")
-    if len(response) > 0:
-        print("segmentacion exitosa")
-
+    assert response != ""
+    assert response == "Reporte de comidas"
+    assert len(response) > 0
+    time.sleep(5)
 
 def test_sugerencias():
-    print("===== TEST SUGERENCIAS =====")
+    time.sleep(5)
     response = sugerencias("Se me antojo tomarme una gaseosa, ¿Deberia tomarla?")
-    if len(response) > 0:
-        print("sugerencia exitosa")
-
+    print("resposne", response)
+    assert type(response) == str
+    assert len(response) > 0
+    time.sleep(5)
 
 def test_recuperar_alimento_texto():
-    print("===== TEST RECUPERAR ALIMENTO =====")
+    time.sleep(5)
     response = recuperar_alimento_texto(
         "Hoy he comido arroz con pollo con papa a la huancaina."
     )
-    if response != {}:
-        print("recuperacion de alimento exitosa")
-
+    assert response != {}
+    assert len(response) > 0
+   
 
 def test_failed_recuperar_alimento_texto():
-    print("===== TEST RECUPERAR ALIMENTO =====")
     response = recuperar_alimento_texto("")
-    if response != {}:
-        print("recuperacion de alimento exitosa")
-    else:
-        print("recuperacion de alimento fallida")
+    assert response == {}
+    assert len(response) == 0
 
 
 def test_segmentar_cantidades_comida():
-    print("===== TEST SEGMENTACION CANTIDAD COMIDA =====")
     response = segmentar_cantidades_comida(
         "Hoy comi 2 huevos con jamon, 1 palta y 2 platanos"
     )
-    if response != "{}":
-        print("segmentacion de cantidades exitosa")
+    assert response != "{}"
+    time.sleep(5)
 
 
 def test_failed_segmentar_cantidades_comida():
-    print("===== TEST FAILED SEGMENTACION CANTIDAD COMIDA =====")
     response = segmentar_cantidades_comida("")
-    if response != "{}":
-        print("segmentacion de cantidades exitosa")
-    elif response == "{}":
-        print("segmentacion de cantidades fallida")
+    assert response == "{}"
+
 
 
 def test_identificar_comida():
-    print("===== TEST IDENTIDICAR COMIDA =====")
+    time.sleep(25)
     response = asyncio.run(
         my_async_identificar_comida("000000000051999999999", "Cene arroz con leche")
     )
-    if response != {}:
-        print("comida identificada exitosamente")
-    else:
-        print("identificacion de comida fallida")
+    assert response != {}
+    assert len(response) > 0
+    assert response == {"arroz con leche": 1}
 
 
 def test_failed_identificar_comida():
-    print("===== TEST FAILED IDENTIDICAR COMIDA =====")
+    time.sleep(25)
     response = asyncio.run(my_async_identificar_comida("000000000051999999999", ""))
-    if response != {}:
-        print("comida identificada exitosamente")
-    else:
-        print("identificacion de comida fallida")
-
-
-test_login_user()
-test_update_usuario()
-test_failed_update_usuario()
-test_update_estado()
-test_failed_update_estado()
-test_existe_usuario()
-test_failed_existe_usuario()
-test_insertar_user_history()
-test_update_user_history()
-test_existe_user_history_en_fecha()
-test_failed_existe_user_history_en_fecha()
-test_recuperar_comida_temprano()
-test_failed_recuperar_comida_temprano()
-test_recuperar_comida_tarde()
-test_failed_recuperar_comida_tarde()
-test_recuperar_comida_noche()
-test_failed_recuperar_comida_noche()
-test_update_temprano()
-test_update_tarde()
-test_update_noche()
-test_update_calorias()
-test_get_users_temprano_with_date()
-test_failed_get_users_temprano_with_date()
-test_get_users_tarde_with_date()
-test_failed_get_users_tarde_with_date()
-test_get_users_noche_with_date()
-test_failed_get_users_noche_with_date()
-test_identificar_confirmacion()
-test_failed_identificar_confimacion()
-test_verificar_datos_bd()
-test_failed_verificar_datos_bd()
-test_guardar_plan_personalizado()
-test_plan_personalizado()
-test_failed_plan_personalizado()
-test_parseo_info()
-test_failed_parseo_info()
-test_parseo_calorias()
-test_failed_parseo_calorias()
-test_segmentador()
-test_sugerencias()
-test_recuperar_alimento_texto()
-test_failed_recuperar_alimento_texto()
-test_segmentar_cantidades_comida()
-test_failed_segmentar_cantidades_comida()
-test_identificar_comida()
-test_failed_identificar_comida()
+    assert response == {}
+    assert len(response) == 0

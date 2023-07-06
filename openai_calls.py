@@ -41,7 +41,7 @@ def plan_personalizado(nombre,talla,peso,edad,objetivo):
 
         ],
         temperature=0,
-        max_tokens=300,
+        max_tokens=500,
     )
 
     result = completion.choices[0].message["content"]

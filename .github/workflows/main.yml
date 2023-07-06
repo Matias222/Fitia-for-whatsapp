@@ -1,0 +1,33 @@
+name: Pytest
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run pytest
+      run: pytest
+
+    - name: Check test results
+      run: |
+        $ErrorActionPreference = 'Stop'
+        if ($LASTEXITCODE -eq 0) {
+          Write-Host "Tests passed successfully"
+        } else {
+          Write-Host "Tests failed"
+          exit $LASTEXITCODE
+        }
+

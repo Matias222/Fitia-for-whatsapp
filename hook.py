@@ -1,8 +1,7 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request,Response, Response
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from dotenv import load_dotenv
-#from datetime import datetime
 import datetime
 from openai.embeddings_utils import get_embedding, cosine_similarity
 
@@ -292,7 +291,7 @@ async def insert_user():
 async def update_user():
     try:        
         numeros_prueba=["51951257655"," 51973633360","51951733905"]
-        numero_aleatorio = random.randint(0, len(numeros_prueba))
+        numero_aleatorio = random.randint(0, len(numeros_prueba)) 
         await update_usuario(numero_aleatorio, "Modificado",
                          peso=40, talla=2.1,
                          objetivo="Bajar de peso", objetivo_confirmado=True,

@@ -170,12 +170,8 @@ def ejecutar_cronjob():
     schedule.every().day.at("17:00").do(asyncio.run, send_notification_tarde("17:00 PM"))
 
     # NOCHE
-    schedule.every().day.at("16:14").do(asyncio.run, send_notification_noche("23:00 PM"))
+    schedule.every().day.at("23:00").do(asyncio.run, send_notification_noche("23:00 PM"))
     
-    # REPORTE
-    schedule.every().day.at("23:59").do(asyncio.run, daily_report())
-
-
     while True:
         schedule.run_pending()
         time.sleep(1)
@@ -187,7 +183,7 @@ def cronjob_test():
     cronjob_thread.start()
 
 def example_test():
-    #asyncio.run(send_notification_noche("11:00 PM"))
-    asyncio.run(daily_report())
+    asyncio.run(send_notification_temprano("11:00 PM"))
+    #asyncio.run(daily_report())
 
 example_test()
