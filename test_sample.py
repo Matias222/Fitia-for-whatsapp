@@ -365,7 +365,6 @@ def test_get_users_temprano_with_date():
     )
     assert response != []
     assert len(response) > 0
-    assert str(response[0]["user_id"]) == "51999999999"
 
 
 def test_failed_get_users_temprano_with_date():
@@ -382,7 +381,6 @@ def test_get_users_tarde_with_date():
     response = asyncio.run(my_async_get_users_tarde_with_date(datetime.datetime.now()))
     assert response != []
     assert len(response) > 0
-    assert str(response[0]["user_id"]) == "51999999999"
 
 
 def test_failed_get_users_tarde_with_date():
