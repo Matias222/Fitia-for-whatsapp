@@ -29,19 +29,13 @@ def plan_personalizado(nombre,talla,peso,edad,objetivo):
         model="gpt-3.5-turbo",
         messages=[
             
-            {"role": "system","content": """Eres un nutricionista experto, dado mi edad, peso, talla, genero y objetivos. Calcula la cantidad maxima de calorias que debo consumir en 1 dia y cuantos litros de agua debo tomar, se conciso pero factualmente correcto."""},
+            {"role": "system","content": """Eres un nutricionista experto, dado mi edad, peso, talla, genero y objetivos. Calcula la cantidad maxima de calorias que debo consumir en 1 dia y cuantos litros de agua debo tomar, se CONCISO pero factualmente correcto."""},
             
-            {"role": "system", "name":"example_user", "content":str(ej1)},
-            {"role": "system", "name": "example_assistant", "content": "100,Agua:2}"},
-
-            {"role": "system", "name":"example_user", "content":str(ej2)},
-            {"role": "system", "name": "example_assistant", "content": "600,Agua:1.8"},
-
-            {"role":"user","content":str(query)}
+            {"role":"user","content":f"""Eres un nutricionista experto, dado mi edad, peso, talla, genero y objetivos. Calcula la cantidad maxima de calorias que debo consumir en 1 dia y cuantos litros de agua debo tomar, se CONCISO pero factualmente correcto. Esta es mi data {str(query)}"""}
 
         ],
         temperature=0,
-        max_tokens=500,
+        max_tokens=300,
     )
 
     result = completion.choices[0].message["content"]
@@ -49,6 +43,14 @@ def plan_personalizado(nombre,talla,peso,edad,objetivo):
     print(result)
 
     return result
+"""
+{"role": "system", "name":"example_user", "content":str(ej1)},
+            {"role": "system", "name": "example_assistant", "content": "100,Agua:2}"},
+
+            {"role": "system", "name":"example_user", "content":str(ej2)},
+            {"role": "system", "name": "example_assistant", "content": "600,Agua:1.8"},
+"""
+
 
 def parseo_info(query):
 

@@ -91,7 +91,7 @@ async def send_notification_noche(hora):
         
 async def daily_report():
     
-    url = 'https://e23f-204-199-168-25.ngrok-free.app/bot' #CAMBIAR PARA PRUEBAS
+    url = 'https://b105-204-199-168-25.ngrok-free.app/bot' #CAMBIAR PARA PRUEBAS
     
     fecha_actual = datetime.date.today()
     fecha_actual_str = fecha_actual.strftime('%Y-%m-') + str(fecha_actual.day).zfill(2)
@@ -183,7 +183,7 @@ def cronjob_test():
     cronjob_thread.start()
 
 def example_test():
-    asyncio.run(send_notification_temprano("11:00 PM"))
-    #asyncio.run(daily_report())
+    #asyncio.run(send_notification_temprano("11:00 PM"))
+    asyncio.run(daily_report())
 
 example_test()
